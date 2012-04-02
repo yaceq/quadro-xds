@@ -107,8 +107,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Misc\Core.cs" />
+    <Compile Include="Misc\DebugRender.cs" />
+    <Compile Include="Misc\DebugStrings.cs" />
+    <Compile Include="Misc\DeviceManager.cs" />
+    <Compile Include="Misc\MathX.cs" />
+    <Compile Include="Misc\MathX.Matrix.cs" />
+    <Compile Include="Misc\MathX.Quaternion.cs" />
+    <Compile Include="Misc\MathX.Vector3.cs" />
+    <Compile Include="Misc\Wildcard.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="SimulatorGame.cs" />
   </ItemGroup>
   <ItemGroup>
