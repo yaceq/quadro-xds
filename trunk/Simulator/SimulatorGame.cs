@@ -17,9 +17,21 @@ namespace Simulator {
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
 
+		ControlPanel	controlPanel = null;
+
 		public SimulatorGame ()
 		{
 			graphics = new GraphicsDeviceManager( this );
+
+			this.AddServiceAndComponent( new Settings(this) );
+			this.GetService<Settings>().LoadSettings();
+
+			var cfg = this.GetService<Settings>().Configuration;
+
+			graphics.PreferredBackBufferWidth	=	cfg.PreferredBackBufferWidth;
+			graphics.PreferredBackBufferHeight	=	cfg.PreferredBackBufferHeight;
+			graphics.PreferMultiSampling		=	cfg.PreferMultiSampling;
+
 			Content.RootDirectory = "Content";
 		}
 
@@ -35,6 +47,14 @@ namespace Simulator {
 			// TODO: Add your initialization logic here
 
 			base.Initialize();
+		}
+
+
+		protected override void OnExiting ( object sender, EventArgs args )
+		{
+			this.GetService<Settings>().SaveSettings();
+
+			base.OnExiting( sender, args );
 		}
 
 
@@ -69,8 +89,19 @@ namespace Simulator {
 		protected override void Update ( GameTime gameTime )
 		{
 			// Allows the game to exit
-			if (GamePad.GetState( PlayerIndex.One ).Buttons.Back == ButtonState.Pressed)
+			if ( Keyboard.GetState().IsKeyDown( Keys.Escape ) ) {
 				this.Exit();
+			}
+
+			if (Keyboard.GetState().IsKeyDown( Keys.F2 )) {
+				if ( controlPanel==null || controlPanel.IsDisposed ) {
+					controlPanel = new ControlPanel();
+					controlPanel.Show();
+					/*controlPanel.propertyGrid1.SelectedObject = settings.UserConfig;
+					controlPanel.propertyGrid1.CollapseAllGridItems();*/
+				}
+			}
+
 
 			// TODO: Add your update logic here
 
