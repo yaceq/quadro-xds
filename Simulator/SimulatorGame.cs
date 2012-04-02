@@ -8,11 +8,11 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using Misc;
+
 
 namespace Simulator {
-	/// <summary>
-	/// This is the main type for your game
-	/// </summary>
+	
 	public class SimulatorGame : Microsoft.Xna.Framework.Game {
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
@@ -23,6 +23,7 @@ namespace Simulator {
 			Content.RootDirectory = "Content";
 		}
 
+	
 		/// <summary>
 		/// Allows the game to perform any initialization it needs to before starting to run.
 		/// This is where it can query for any required services and load any non-graphic
@@ -36,6 +37,7 @@ namespace Simulator {
 			base.Initialize();
 		}
 
+
 		/// <summary>
 		/// LoadContent will be called once per game and is the place to load
 		/// all of your content.
@@ -48,6 +50,7 @@ namespace Simulator {
 			// TODO: use this.Content to load your game content here
 		}
 
+
 		/// <summary>
 		/// UnloadContent will be called once per game and is the place to unload
 		/// all content.
@@ -57,6 +60,7 @@ namespace Simulator {
 			// TODO: Unload any non ContentManager content here
 		}
 
+		
 		/// <summary>
 		/// Allows the game to run logic such as updating the world,
 		/// checking for collisions, gathering input, and playing audio.
@@ -72,6 +76,7 @@ namespace Simulator {
 
 			base.Update( gameTime );
 		}
+
 
 		/// <summary>
 		/// This is called when the game should draw itself.

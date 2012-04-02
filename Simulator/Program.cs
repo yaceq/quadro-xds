@@ -1,4 +1,5 @@
 using System;
+using Misc;
 
 namespace Simulator {
 #if WINDOWS || XBOX
@@ -9,6 +10,8 @@ namespace Simulator {
         /// </summary>
         static void Main(string[] args)
         {
+			Core.InitEnvironment();
+
             using (SimulatorGame game = new SimulatorGame())
             {
                 game.Run();
