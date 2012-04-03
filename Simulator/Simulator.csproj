@@ -96,6 +96,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml">
       <Private>False</Private>
     </Reference>
@@ -128,8 +129,10 @@
     <Compile Include="Misc\Wildcard.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Quadrocopter.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SimulatorGame.cs" />
+    <Compile Include="World.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />
@@ -139,6 +142,14 @@
     <ProjectReference Include="..\SimulatorContent\SimulatorContent.contentproj">
       <Name>SimulatorContent</Name>
       <XnaReferenceType>Content</XnaReferenceType>
+    </ProjectReference>
+    <ProjectReference Include="Physics\BEPUphysicsDrawer\BEPUphysicsDrawer.csproj">
+      <Project>{A7931B1B-6BF4-43C5-B924-6AEB732243BA}</Project>
+      <Name>BEPUphysicsDrawer</Name>
+    </ProjectReference>
+    <ProjectReference Include="Physics\BEPUphysics\BEPUphysics.csproj">
+      <Project>{2A9D2227-78D7-4804-B6D1-560BB43AE911}</Project>
+      <Name>BEPUphysics</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

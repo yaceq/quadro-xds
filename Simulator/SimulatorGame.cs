@@ -23,7 +23,9 @@ namespace Simulator {
 		{
 			graphics = new GraphicsDeviceManager( this );
 
-			this.AddServiceAndComponent( new Settings(this) );
+			this.AddServiceAndComponent( new Settings( this ) );
+			this.AddServiceAndComponent( new World( this, @"scenes\plane" ) );
+
 			this.GetService<Settings>().LoadSettings();
 
 			var cfg = this.GetService<Settings>().Configuration;
@@ -95,7 +97,7 @@ namespace Simulator {
 
 			if (Keyboard.GetState().IsKeyDown( Keys.F2 )) {
 				if ( controlPanel==null || controlPanel.IsDisposed ) {
-					controlPanel = new ControlPanel();
+					controlPanel = new ControlPanel(this);
 					controlPanel.Show();
 					/*controlPanel.propertyGrid1.SelectedObject = settings.UserConfig;
 					controlPanel.propertyGrid1.CollapseAllGridItems();*/
@@ -121,5 +123,36 @@ namespace Simulator {
 
 			base.Draw( gameTime );
 		}
+
+
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="model"></param>
+		/// <param name="world"></param>
+		/// <param name="view"></param>
+		/// <param name="proj"></param>
+		public static void DrawModel ( Model model, Matrix world, Matrix view, Matrix proj ) 
+		{
+			foreach ( var modelMesh in model.Meshes ) {
+				foreach ( BasicEffect effect in modelMesh.Effects ) {
+					effect.DirectionalLight0.Enabled = true;
+					effect.DirectionalLight0.Direction = Vector3.One;
+					effect.DirectionalLight0.DiffuseColor = Vector3.One;
+					effect.DirectionalLight0.SpecularColor = Vector3.One;
+					effect.EnableDefaultLighting();
+					//effect.DiffuseColor	=	color.ToVector3();
+
+					effect.FogColor		=	(new Color(83,90,99)).ToVector3();
+					effect.FogEnabled	=	true;
+					effect.FogStart		=	500;
+					effect.FogEnd		=	2000;
+				}	
+			}
+
+			model.Draw( world, view, proj );
+		}
+
 	}
 }
