@@ -21,10 +21,16 @@ namespace Simulator {
 		[Category("Rendering")]	public int		PreferredBackBufferHeight { set; get; }
 		[Category("Rendering")]	public bool		UseSecondMonitor { set; get; }
 
+		[Category("Tracker")]	public string	Host { set; get; }
+
+		[Category("Physics")]	public bool		ShowBodies { set; get; }
+
 		public Configuration()
 		{
 			PreferredBackBufferWidth	=	1280;
 			PreferredBackBufferHeight	=	720;
+
+			Host	=	"192.168.10.1:801";
 		}
 	}
 }
