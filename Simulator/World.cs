@@ -91,6 +91,7 @@ namespace Simulator {
 			space.Update( (float)gameTime.ElapsedGameTime.TotalSeconds );
 			drawer.Update();
 
+
 			base.Update( gameTime );
 		}
 
@@ -106,8 +107,12 @@ namespace Simulator {
 
 			Game.GraphicsDevice.ResetDeviceState();
 
-			var proj = Matrix.CreatePerspectiveFieldOfView( MathHelper.ToRadians(70), Game.GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000.0f );
+			var proj = Matrix.CreatePerspectiveFieldOfView( MathHelper.ToRadians(cfg.Fov), Game.GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000.0f );
 			var view = Matrix.CreateLookAt( 2*(Vector3.Up + Vector3.Backward + Vector3.Right), Vector3.Zero, Vector3.Up );
+
+			if (cfg.CameraMode==Configuration.CameraModes.ViewFromPoint) {
+				view = Matrix.CreateLookAt( cfg.PointOfView, quadrocopter.Position, Vector3.Up );
+			}
 
 			quadrocopter.Draw( dt, view, proj );
 
