@@ -34,6 +34,8 @@ namespace Simulator {
 			graphics.PreferredBackBufferHeight	=	cfg.PreferredBackBufferHeight;
 			graphics.PreferMultiSampling		=	cfg.PreferMultiSampling;
 
+			this.IsMouseVisible = true;
+
 			Content.RootDirectory = "Content";
 		}
 

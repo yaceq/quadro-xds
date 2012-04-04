@@ -18,21 +18,22 @@ using BEPUphysics.Entities.Prefabs;
 using BEPUphysics.EntityStateManagement;
 using BEPUphysics.PositionUpdating;
 //using ViconDataStreamSDK.DotNET;
+using System.ComponentModel;
 
 
 
 namespace Simulator {
 	public class Quadrocopter {
 
-		public float	MaxRPM				{ set; get; }
-		public float	MaxRotorThrust		{ set; get; }
-		public float	MaxRotorTorque		{ set; get; }
-		public float	Mass				{ set; get; }
-		public float	AirResistance		{ set; get; }
-		public bool		TrackMotion			{ set; get; }
-		public string	TrackingObjectName	{ set; get; }
-		public float	ArmLength			{ set; get; }
-		public Vector3	LinearSize			{ set; get; }
+		[Category("Dynamics")]	public float	MaxRPM				{ set; get; }
+		[Category("Dynamics")]	public float	MaxRotorThrust		{ set; get; }
+		[Category("Dynamics")]	public float	MaxRotorTorque		{ set; get; }
+		[Category("Dynamics")]	public float	Mass				{ set; get; }
+		[Category("Dynamics")]	public float	AirResistance		{ set; get; }
+		[Category("Dynamics")]	public bool		TrackMotion			{ set; get; }
+		[Category("Dynamics")]	public string	TrackingObjectName	{ set; get; }
+		[Category("Dynamics")]	public float	ArmLength			{ set; get; }
+		[Category("Dynamics")]	public Vector3	LinearSize			{ set; get; }
 
 		Model	frame;
 		Model	propellerA;
@@ -53,6 +54,11 @@ namespace Simulator {
 		Vector3	arm2	=	(float)Math.Sqrt(2)/2 * ( Vector3.Right + Vector3.Backward );
 		Vector3	arm3	=	(float)Math.Sqrt(2)/2 * ( Vector3.Left  + Vector3.Backward );
 		Vector3	arm4	=	(float)Math.Sqrt(2)/2 * ( Vector3.Left  + Vector3.Forward  );
+
+		
+
+
+		public Vector3 Position { get { return box.WorldTransform.Translation; } }
 																					   
 
 		public Quadrocopter( Game game, World world )
@@ -74,8 +80,8 @@ namespace Simulator {
 			propellerB		=	game.Content.Load<Model>( @"scenes\propellerB" );
 
 			box	=	new Box( Vector3.Up * LinearSize.Y/2, LinearSize.X, LinearSize.Y, LinearSize.Z, Mass );
-			box.AngularDamping = 0.5f;
-			box.LinearDamping  = 0.5f;
+			box.AngularDamping = 0.0f;
+			box.LinearDamping  = 0.0f;
 			world.Space.Add( box );
 			world.Drawer.Add( box );
 
@@ -122,6 +128,10 @@ namespace Simulator {
 		{
 			var ks = Keyboard.GetState();
 			var gps = GamePad.GetState( 0 );
+
+			if (gps.IsButtonDown( Buttons.B ) || ks.IsKeyDown( Keys.B ) ) {
+				box.WorldTransform	=	Matrix.CreateTranslation( Vector3.Up * LinearSize.Y/2 );
+			}
 
 			float avgRpm = gps.Triggers.Left * MaxRPM;
 
