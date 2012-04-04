@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using System.Windows;
+using System.Windows.Forms;
 using BEPUphysics;
 using BEPUphysics.Collidables;
 using BEPUphysics.DataStructures;
@@ -33,6 +35,8 @@ namespace Simulator {
 
 		public	Quadrocopter quadrocopter;
 
+		public Tracker	Tracker;
+
 
 		/// <summary>
 		/// Constructor
@@ -42,6 +46,7 @@ namespace Simulator {
 		public World ( Game game, string worldModelName ) : base( game )
 		{
 			this.worldModelName = worldModelName;
+
 		}
 
 
@@ -74,6 +79,34 @@ namespace Simulator {
 			quadrocopter =	new Quadrocopter( Game, this );
 
 			base.Initialize();
+		}
+
+
+
+		/// <summary>
+		/// ConnectTracker
+		/// </summary>
+		public void ConnectTracker()
+		{
+			var cfg = Game.GetService<Settings>().Configuration;
+			try {
+				Tracker = new Tracker( cfg.Host );
+			} catch (Exception ex) {
+				MessageBox.Show(String.Format("Failed to connect to : {0}\r\n{1}\r\nTracking is disabled", cfg.Host, ex.Message), "Tracker connection error", MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning );
+				Tracker = null;
+			}
+		}
+
+
+
+		/// <summary>
+		/// DisconnectTracker
+		/// </summary>
+		public void DisconnectTracker()
+		{
+			if (Tracker!=null) {	
+				Tracker = null;
+			}
 		}
 
 

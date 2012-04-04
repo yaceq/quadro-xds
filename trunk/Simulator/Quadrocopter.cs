@@ -71,6 +71,8 @@ namespace Simulator {
 			ArmLength		=	0.30f;
 			LinearSize		=	new Vector3( 0.6f, 0.06f, 0.6f );
 
+			TrackingObjectName	=	"Quadrocopter";
+
 
 			this.game		=	game;
 			this.world		=	world;
@@ -100,6 +102,7 @@ namespace Simulator {
 			float rpm2torque = MaxRotorTorque / ( MaxRPM * MaxRPM );
 
 			DirectControl();
+			UpdateFromTracker();
 
 			rpm1 = MathHelper.Clamp( rpm1, 0, MaxRPM );
 			rpm2 = MathHelper.Clamp( rpm2, 0, MaxRPM );
@@ -122,6 +125,27 @@ namespace Simulator {
 			box.AngularMomentum = box.WorldTransform.Up * rpm2torque * rpm4 * rpm4;*/
 		}
 
+
+
+		public void UpdateFromTracker ()
+		{
+			if (TrackMotion && world.Tracker!=null) {
+				var frame = world.Tracker.GetFrame();
+				var subject = frame[ TrackingObjectName ];
+				if (subject!=null) {
+					var segment = subject[ TrackingObjectName ];
+
+					var xform = segment.Transform;
+
+					xform.Translation = xform.Translation * new Vector3( 0.01f, 0.01f, 0.01f );
+
+					box.WorldTransform = xform;
+					
+					box.LinearVelocity = Vector3.Zero;
+				}
+
+			}
+		}
 
 
 		public void DirectControl ()
