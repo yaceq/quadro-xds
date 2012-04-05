@@ -28,6 +28,7 @@ namespace Simulator {
 
 		public enum CameraModes {
 			BoundToQuadrocopter,
+			BoundToQuadrocopterHorison,
 			ViewFromPoint,
 			ViewAround
 		}

@@ -17,6 +17,7 @@ using BEPUphysics.CollisionShapes.ConvexShapes;
 using BEPUphysicsDrawer.Models;
 using BEPUphysics.Entities.Prefabs;
 using BEPUphysics.EntityStateManagement;
+using System.Runtime.InteropServices;
 using Misc;
 
 namespace Simulator {
@@ -78,6 +79,8 @@ namespace Simulator {
 				
 			quadrocopter =	new Quadrocopter( Game, this );
 
+			Connect3DMouse();
+
 			base.Initialize();
 		}
 
@@ -110,6 +113,62 @@ namespace Simulator {
 		}
 
 
+
+
+		private TDx.TDxInput.Sensor		sensor	 = null; 
+		private TDx.TDxInput.Keyboard	keyboard = null;
+		private TDx.TDxInput.Device		device	 = null;
+
+		/// <summary>
+		/// Connects 3D mouse :
+		/// </summary>
+		public void Connect3DMouse ()
+		{
+			try {
+				this.device		= new TDx.TDxInput.Device();
+				this.sensor		= this.device.Sensor;
+				this.keyboard	= this.device.Keyboard;
+
+				// Associate a configuration with this device'
+				this.device.LoadPreferences("QuadroXDS");
+
+				//Connect everything up
+				this.device.Connect();
+
+			} catch (COMException e) {
+				Console.WriteLine("{0} Caught exception #1.", e);
+				this.device		= null;
+				this.sensor		= null;
+				this.keyboard	= null;
+			}
+		}
+
+
+		/*public Vector3	Get3DxTranslation () 
+		{
+			if (sensor==null) return Vector3.Zero;
+
+            TDx.TDxInput.Vector3D translation;
+            translation = sensor.Translation;
+            return new Vector3( (float)translation.X, (float)translation.Y, (float)translation.Z );
+		}
+
+
+		public Vector3	Get3DxRotation () 
+		{
+			if (sensor==null) return Vector3.Zero;
+
+            TDx.TDxInput.AngleAxis rotation;
+            rotation = sensor.Rotation;
+            return new Vector3( (float)rotation.X, (float)rotation.Y, (float)rotation.Z );
+		} */
+
+
+		public Vector3 Mouse3DTranslation	{ get; protected set; }
+		public Vector3 Mouse3DRotationAxis	{ get; protected set; }
+		public float   Mouse3DRotationAngle	{ get; protected set; }
+
+
 		/// <summary>
 		/// Allows the game component to update itself.
 		/// </summary>
@@ -117,7 +176,23 @@ namespace Simulator {
 		public override void Update ( GameTime gameTime )
 		{
 			// TODO: Add your update code here
+			var ds = Game.GetService<DebugStrings>();
 			float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+			if (sensor!=null) {
+				var translation = sensor.Translation;
+				Mouse3DTranslation = new Vector3( (float)translation.X, (float)translation.Y, (float)translation.Z );
+
+				var rotation = sensor.Rotation;
+
+				//sensor.Period
+				Mouse3DRotationAxis		= new Vector3( (float)rotation.X, (float)rotation.Y, (float)rotation.Z );
+				Mouse3DRotationAngle	= (float)rotation.Angle;
+
+				ds.Add( Mouse3DTranslation.ToString() );
+				ds.Add( Mouse3DRotationAxis.ToString() + " : " + Mouse3DRotationAngle.ToString() );
+			}
+
 
 			quadrocopter.Update( dt );
 
@@ -125,9 +200,15 @@ namespace Simulator {
 			drawer.Update();
 
 
+
 			base.Update( gameTime );
 		}
 
+
+
+
+		Matrix	currentViewMatrix;
+		bool	firstFrame = true;
 
 		/// <summary>
 		/// Draws stuff
@@ -145,6 +226,30 @@ namespace Simulator {
 
 			if (cfg.CameraMode==Configuration.CameraModes.ViewFromPoint) {
 				view = Matrix.CreateLookAt( cfg.PointOfView, quadrocopter.Position, Vector3.Up );
+			}
+
+			if (cfg.CameraMode==Configuration.CameraModes.BoundToQuadrocopter) {
+				var fw = quadrocopter.Transform.Forward;
+				var	up = quadrocopter.Transform.Up;
+				var p  = quadrocopter.Position + up * 0.3f - fw;
+				if (p.Y < 0.1f ) p.Y = 0.1f;
+				view = Matrix.CreateLookAt( p, p + fw, Vector3.Up );
+			}
+
+			if (cfg.CameraMode==Configuration.CameraModes.BoundToQuadrocopterHorison) {
+				var fw = quadrocopter.Transform.Forward;
+				var	up = quadrocopter.Transform.Up;
+				var p  = quadrocopter.Position + up * 0.3f - fw;
+				if (p.Y < 0.1f ) p.Y = 0.1f;
+				view = Matrix.CreateLookAt( p, p + fw, up );
+			}
+
+			if (firstFrame) {
+				currentViewMatrix = view;
+				firstFrame = false;
+			} else {
+				currentViewMatrix = MathX.LerpMatrix( currentViewMatrix, view, 0.9f );
+				//view = currentViewMatrix;
 			}
 
 			quadrocopter.Draw( dt, view, proj );

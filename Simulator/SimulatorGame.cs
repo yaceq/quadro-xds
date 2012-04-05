@@ -24,6 +24,7 @@ namespace Simulator {
 			graphics = new GraphicsDeviceManager( this );
 
 			this.AddServiceAndComponent( new Settings( this ) );
+			this.AddServiceAndComponent( new DebugStrings( this, "debugFont", 1 ) );
 			this.AddServiceAndComponent( new World( this, @"scenes\plane" ) );
 
 			this.GetService<Settings>().LoadSettings();
@@ -92,6 +93,11 @@ namespace Simulator {
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Update ( GameTime gameTime )
 		{
+			var ds = this.GetService<DebugStrings>();
+			ds.Clear();
+
+			ds.Add( string.Format("FPS = {0:0.00}", 1 / gameTime.ElapsedGameTime.TotalSeconds ) );
+
 			// Allows the game to exit
 			if ( Keyboard.GetState().IsKeyDown( Keys.Escape ) ) {
 				this.Exit();
@@ -105,7 +111,6 @@ namespace Simulator {
 					controlPanel.propertyGrid1.CollapseAllGridItems();*/
 				}
 			}
-
 
 			// TODO: Add your update logic here
 
@@ -122,6 +127,8 @@ namespace Simulator {
 			GraphicsDevice.Clear( Color.CornflowerBlue );
 
 			// TODO: Add your drawing code here
+
+			var ds = this.GetService<DebugStrings>();
 
 			base.Draw( gameTime );
 		}
