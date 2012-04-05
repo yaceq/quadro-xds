@@ -109,6 +109,10 @@
     <Reference Include="System.Net">
       <Private>False</Private>
     </Reference>
+    <Reference Include="TDx.TDxInput">
+      <HintPath>.\TDx.TDxInput.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="ViconDataStreamSDK_DotNET, Version=0.0.0.0, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Tracker\ViconDataStreamSDK_DotNET.dll</HintPath>

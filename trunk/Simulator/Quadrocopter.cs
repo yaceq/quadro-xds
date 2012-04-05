@@ -49,6 +49,15 @@ namespace Simulator {
 		float	rpm2 = 0;
 		float	rpm3 = 0;
 		float	rpm4 = 0;
+		float	trpm1 = 0;
+		float	trpm2 = 0;
+		float	trpm3 = 0;
+		float	trpm4 = 0;
+
+		float	rot1 = 0;
+		float	rot2 = 0;
+		float	rot3 = 0;
+		float	rot4 = 0;
 
 		Vector3	arm1	=	(float)Math.Sqrt(2)/2 * ( Vector3.Right + Vector3.Forward  );
 		Vector3	arm2	=	(float)Math.Sqrt(2)/2 * ( Vector3.Right + Vector3.Backward );
@@ -59,6 +68,7 @@ namespace Simulator {
 
 
 		public Vector3 Position { get { return box.WorldTransform.Translation; } }
+		public Matrix  Transform { get { return box.WorldTransform; } }
 																					   
 
 		public Quadrocopter( Game game, World world )
@@ -68,8 +78,8 @@ namespace Simulator {
 			MaxRotorTorque	=	1.00f;	//	-- check!
 			Mass			=	0.70f;	//	700 gramms
 			AirResistance	=	0.10f;	//	
-			ArmLength		=	0.30f;
-			LinearSize		=	new Vector3( 0.6f, 0.06f, 0.6f );
+			ArmLength		=	0.15f;
+			LinearSize		=	new Vector3( 0.4f, 0.10f, 0.4f );
 
 			TrackingObjectName	=	"Quadrocopter";
 
@@ -87,9 +97,9 @@ namespace Simulator {
 			world.Space.Add( box );
 			world.Drawer.Add( box );
 
-			box.Material.KineticFriction	=	5.0f;
-			box.Material.StaticFriction		=	5.0f;
-			box.Material.Bounciness			=	0.2f;
+			box.Material.KineticFriction	=	0.7f;
+			box.Material.StaticFriction		=	0.7f;
+			box.Material.Bounciness			=	0.15f;
 
 			box.PositionUpdateMode = PositionUpdateMode.Continuous;
 		}
@@ -104,10 +114,15 @@ namespace Simulator {
 			DirectControl();
 			UpdateFromTracker();
 
-			rpm1 = MathHelper.Clamp( rpm1, 0, MaxRPM );
-			rpm2 = MathHelper.Clamp( rpm2, 0, MaxRPM );
-			rpm3 = MathHelper.Clamp( rpm3, 0, MaxRPM );
-			rpm4 = MathHelper.Clamp( rpm4, 0, MaxRPM );
+			trpm1 = MathHelper.Clamp( trpm1, 0, MaxRPM );
+			trpm2 = MathHelper.Clamp( trpm2, 0, MaxRPM );
+			trpm3 = MathHelper.Clamp( trpm3, 0, MaxRPM );
+			trpm4 = MathHelper.Clamp( trpm4, 0, MaxRPM );
+
+			rpm1 = MathHelper.Lerp( rpm1, trpm1, 0.2f );
+			rpm2 = MathHelper.Lerp( rpm2, trpm2, 0.2f );
+			rpm3 = MathHelper.Lerp( rpm3, trpm3, 0.2f );
+			rpm4 = MathHelper.Lerp( rpm4, trpm4, 0.2f );
 
 			ApplyForceLL( ref box, dt, arm1 * ArmLength, Vector3.Up * rpm2thrust * rpm1 * rpm1 );
 			ApplyForceLL( ref box, dt, arm2 * ArmLength, Vector3.Up * rpm2thrust * rpm2 * rpm2 );
@@ -118,6 +133,11 @@ namespace Simulator {
 			ApplyForceLL( ref box, dt, arm2, arm1 * rpm2torque * rpm2 * rpm2 );
 			ApplyForceLL( ref box, dt, arm3, arm4 * rpm2torque * rpm3 * rpm3 );
 			ApplyForceLL( ref box, dt, arm4, arm3 * rpm2torque * rpm4 * rpm4 );
+
+			rot1 += rpm1 * dt / 200.0f;
+			rot2 += rpm2 * dt / 200.0f;
+			rot3 += rpm3 * dt / 200.0f;
+			rot4 += rpm4 * dt / 200.0f;
 
 			/*box.AngularMomentum = box.WorldTransform.Up * rpm2torque * rpm1 * rpm1;
 			box.AngularMomentum = box.WorldTransform.Up * rpm2torque * rpm2 * rpm2;
@@ -157,28 +177,30 @@ namespace Simulator {
 				box.WorldTransform	=	Matrix.CreateTranslation( Vector3.Up * LinearSize.Y/2 );
 			}
 
-			float avgRpm = gps.Triggers.Left * MaxRPM;
+			float avgRpm = ( gps.Triggers.Left + world.Mouse3DTranslation.Y / 1.0f ) * MaxRPM;
 
-			rpm1 = avgRpm;
-			rpm2 = avgRpm;
-			rpm3 = avgRpm;
-			rpm4 = avgRpm;
+			trpm1 = avgRpm;
+			trpm2 = avgRpm;
+			trpm3 = avgRpm;
+			trpm4 = avgRpm;
 
-			rpm1 -= avgRpm * gps.ThumbSticks.Right.X / 8;
-			rpm2 -= avgRpm * gps.ThumbSticks.Right.X / 8;
-			rpm3 += avgRpm * gps.ThumbSticks.Right.X / 8;
-			rpm4 += avgRpm * gps.ThumbSticks.Right.X / 8;
-													 
-			rpm1 -= avgRpm * gps.ThumbSticks.Right.Y / 8;
-			rpm2 += avgRpm * gps.ThumbSticks.Right.Y / 8;
-			rpm3 += avgRpm * gps.ThumbSticks.Right.Y / 8;
-			rpm4 -= avgRpm * gps.ThumbSticks.Right.Y / 8;
+			var m3drot =  world.Mouse3DRotationAxis * world.Mouse3DRotationAngle / 80.0f;
+			
+			trpm1 -= avgRpm * ( gps.ThumbSticks.Right.X  - m3drot.Z ) / 8;
+			trpm2 -= avgRpm * ( gps.ThumbSticks.Right.X  - m3drot.Z ) / 8;
+			trpm3 += avgRpm * ( gps.ThumbSticks.Right.X  - m3drot.Z ) / 8;
+			trpm4 += avgRpm * ( gps.ThumbSticks.Right.X  - m3drot.Z ) / 8;
+							  
+			trpm1 -= avgRpm * ( gps.ThumbSticks.Right.Y  - m3drot.X ) / 8;
+			trpm2 += avgRpm * ( gps.ThumbSticks.Right.Y  - m3drot.X ) / 8;
+			trpm3 += avgRpm * ( gps.ThumbSticks.Right.Y  - m3drot.X ) / 8;
+			trpm4 -= avgRpm * ( gps.ThumbSticks.Right.Y  - m3drot.X ) / 8;
 
 
-			rpm1 += avgRpm * gps.ThumbSticks.Left.X / 8;
-			rpm2 -= avgRpm * gps.ThumbSticks.Left.X / 8;
-			rpm3 += avgRpm * gps.ThumbSticks.Left.X / 8;
-			rpm4 -= avgRpm * gps.ThumbSticks.Left.X / 8;
+			trpm1 += avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
+			trpm2 -= avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
+			trpm3 += avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
+			trpm4 -= avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
 		}
 
 
@@ -186,13 +208,23 @@ namespace Simulator {
 		public void Draw ( float dt, Matrix view, Matrix proj )
 		{
 			SimulatorGame.DrawModel( frame, box.WorldTransform, view, proj );
+
+			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( rot1/3.14f) * Matrix.CreateTranslation( arm1 * ArmLength ) * box.WorldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-rot2/3.14f) * Matrix.CreateTranslation( arm2 * ArmLength ) * box.WorldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( rot3/3.14f) * Matrix.CreateTranslation( arm3 * ArmLength ) * box.WorldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-rot4/3.14f) * Matrix.CreateTranslation( arm4 * ArmLength ) * box.WorldTransform, view, proj );
 		}
 		
 
 		void ApplyForceLL ( ref Box box, float dt, Vector3 point, Vector3 localForce )
 		{
 			var m = box.WorldTransform;
-			box.ApplyImpulse( Vector3.Transform(point, m), Vector3.TransformNormal(localForce * dt, m) );
+			var p = Vector3.Transform(point, m);
+			var f = Vector3.TransformNormal(localForce * dt, m);
+
+			float groundEffect = 1 + 0.4f * (float)Math.Exp( -2*p.Y ) / MathHelper.E;
+
+			box.ApplyImpulse( p, f * groundEffect );
 		}
 
 
