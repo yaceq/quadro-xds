@@ -19,6 +19,7 @@ using BEPUphysics.EntityStateManagement;
 using BEPUphysics.PositionUpdating;
 //using ViconDataStreamSDK.DotNET;
 using System.ComponentModel;
+using Misc;
 
 
 
@@ -34,6 +35,11 @@ namespace Simulator {
 		[Category("Dynamics")]	public string	TrackingObjectName	{ set; get; }
 		[Category("Dynamics")]	public float	ArmLength			{ set; get; }
 		[Category("Dynamics")]	public Vector3	LinearSize			{ set; get; }
+
+
+		[Category("Control")]	public bool		EnableStabilization	 { set; get; }
+		[Category("Control")]	public float	StabilizationFactor	 { set; get; }
+		[Category("Control")]	public float	StabilizationDamping { set; get; }
 
 		Model	frame;
 		Model	propellerA;
@@ -64,6 +70,15 @@ namespace Simulator {
 		Vector3	arm3	=	(float)Math.Sqrt(2)/2 * ( Vector3.Left  + Vector3.Backward );
 		Vector3	arm4	=	(float)Math.Sqrt(2)/2 * ( Vector3.Left  + Vector3.Forward  );
 
+		SoundEffect				liftSound;
+		SoundEffectInstance		liftSoundInstance1;
+		SoundEffectInstance		liftSoundInstance2;
+		SoundEffectInstance		liftSoundInstance3;
+		SoundEffectInstance		liftSoundInstance4;
+		AudioEmitter			liftSoundEmitter1;
+		AudioEmitter			liftSoundEmitter2;
+		AudioEmitter			liftSoundEmitter3;
+		AudioEmitter			liftSoundEmitter4;
 		
 
 
@@ -75,11 +90,15 @@ namespace Simulator {
 		{
 			MaxRPM			=	20000;	//	rotations per minute
 			MaxRotorThrust	=	2.75f;	//	1100 gramms / 4 motors
-			MaxRotorTorque	=	1.00f;	//	-- check!
+			MaxRotorTorque	=	0.10f;	//	-- check!
 			Mass			=	0.70f;	//	700 gramms
 			AirResistance	=	0.10f;	//	
 			ArmLength		=	0.15f;
 			LinearSize		=	new Vector3( 0.4f, 0.10f, 0.4f );
+			
+			EnableStabilization		=	true;
+			StabilizationFactor		=	-0.7f;
+			StabilizationDamping	=	 0.5f;
 
 			TrackingObjectName	=	"Quadrocopter";
 
@@ -92,8 +111,8 @@ namespace Simulator {
 			propellerB		=	game.Content.Load<Model>( @"scenes\propellerB" );
 
 			box	=	new Box( Vector3.Up * LinearSize.Y/2, LinearSize.X, LinearSize.Y, LinearSize.Z, Mass );
-			box.AngularDamping = 0.0f;
-			box.LinearDamping  = 0.0f;
+			box.AngularDamping = 0.2f;
+			box.LinearDamping  = 0.2f;
 			world.Space.Add( box );
 			world.Drawer.Add( box );
 
@@ -102,6 +121,27 @@ namespace Simulator {
 			box.Material.Bounciness			=	0.15f;
 
 			box.PositionUpdateMode = PositionUpdateMode.Continuous;
+
+			// sound stuff :
+			liftSound			=	game.Content.Load<SoundEffect>("copter1");
+			liftSoundInstance1	=	liftSound.CreateInstance();
+			liftSoundInstance2	=	liftSound.CreateInstance();
+			liftSoundInstance3	=	liftSound.CreateInstance();
+			liftSoundInstance4	=	liftSound.CreateInstance();
+			liftSoundEmitter1	=	new AudioEmitter();
+			liftSoundEmitter2	=	new AudioEmitter();
+			liftSoundEmitter3	=	new AudioEmitter();
+			liftSoundEmitter4	=	new AudioEmitter();
+
+			liftSoundInstance1.Apply3D( world.Listener, liftSoundEmitter1 );
+			liftSoundInstance2.Apply3D( world.Listener, liftSoundEmitter2 );
+			liftSoundInstance3.Apply3D( world.Listener, liftSoundEmitter3 );
+			liftSoundInstance4.Apply3D( world.Listener, liftSoundEmitter4 );
+
+			liftSoundInstance1.IsLooped = true;		liftSoundInstance1.Volume = 0; 	liftSoundInstance1.Play();
+			liftSoundInstance2.IsLooped = true;		liftSoundInstance2.Volume = 0; 	liftSoundInstance2.Play();
+			liftSoundInstance3.IsLooped = true;		liftSoundInstance3.Volume = 0;	liftSoundInstance3.Play();
+			liftSoundInstance4.IsLooped = true;		liftSoundInstance4.Volume = 0;	liftSoundInstance4.Play();
 		}
 
 
@@ -111,7 +151,7 @@ namespace Simulator {
 			float rpm2thrust = MaxRotorThrust / ( MaxRPM * MaxRPM );
 			float rpm2torque = MaxRotorTorque / ( MaxRPM * MaxRPM );
 
-			DirectControl();
+			DirectControl(dt);
 			UpdateFromTracker();
 
 			trpm1 = MathHelper.Clamp( trpm1, 0, MaxRPM );
@@ -138,6 +178,30 @@ namespace Simulator {
 			rot2 += rpm2 * dt / 200.0f;
 			rot3 += rpm3 * dt / 200.0f;
 			rot4 += rpm4 * dt / 200.0f;
+
+
+			liftSoundEmitter1.Position = Vector3.Transform( arm1 * ArmLength, box.WorldTransform );
+			liftSoundEmitter2.Position = Vector3.Transform( arm2 * ArmLength, box.WorldTransform );
+			liftSoundEmitter3.Position = Vector3.Transform( arm3 * ArmLength, box.WorldTransform );
+			liftSoundEmitter4.Position = Vector3.Transform( arm4 * ArmLength, box.WorldTransform );
+
+			float pitch1 = rpm1 / MaxRPM;
+			float pitch2 = rpm2 / MaxRPM;
+			float pitch3 = rpm3 / MaxRPM;
+			float pitch4 = rpm4 / MaxRPM;
+
+			liftSoundInstance1.Volume = pitch1;
+			liftSoundInstance2.Volume = pitch2;
+			liftSoundInstance3.Volume = pitch3;
+			liftSoundInstance4.Volume = pitch4;
+			liftSoundInstance1.Pitch  = pitch1*2-1;
+			liftSoundInstance2.Pitch  = pitch2*2-1;
+			liftSoundInstance3.Pitch  = pitch3*2-1;
+			liftSoundInstance4.Pitch  = pitch4*2-1;
+			liftSoundInstance1.Apply3D( world.Listener, liftSoundEmitter1 );
+			liftSoundInstance2.Apply3D( world.Listener, liftSoundEmitter2 );
+			liftSoundInstance3.Apply3D( world.Listener, liftSoundEmitter3 );
+			liftSoundInstance4.Apply3D( world.Listener, liftSoundEmitter4 );
 
 			/*box.AngularMomentum = box.WorldTransform.Up * rpm2torque * rpm1 * rpm1;
 			box.AngularMomentum = box.WorldTransform.Up * rpm2torque * rpm2 * rpm2;
@@ -168,7 +232,7 @@ namespace Simulator {
 		}
 
 
-		public void DirectControl ()
+		public void DirectControl (float dt)
 		{
 			var ks = Keyboard.GetState();
 			var gps = GamePad.GetState( 0 );
@@ -185,6 +249,8 @@ namespace Simulator {
 			trpm2 = avgRpm;
 			trpm3 = avgRpm;
 			trpm4 = avgRpm;
+
+			Stabilize(dt);
 
 			var m3drot =  world.Mouse3DRotationAxis * world.Mouse3DRotationAngle / 80.0f;
 			
@@ -203,6 +269,49 @@ namespace Simulator {
 			trpm2 -= avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
 			trpm3 += avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
 			trpm4 -= avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
+		}
+
+
+		float oldPitch, oldRoll;
+
+		public void Stabilize(float dt)
+		{
+			var ds = game.GetService<DebugStrings>();
+
+			if (!EnableStabilization) return;
+			if (dt<0.01f) return;
+
+			float yaw, pitch, roll;
+			MathX.ToAngles( box.WorldTransform, out yaw, out pitch, out roll );
+
+			yaw		= MathHelper.ToDegrees( yaw );
+			pitch	= MathHelper.ToDegrees( pitch );
+			roll	= MathHelper.ToDegrees( roll );
+
+			var rollV  = (oldRoll  - roll ) / dt;
+			var pitchV = (oldPitch - pitch) / dt;
+
+			oldRoll		=	roll;
+			oldPitch	=	pitch;
+
+			ds.Add( string.Format( "Yaw   : {0,5:0.0}", yaw		) );
+			ds.Add( string.Format( "Pitch : {0,5:0.0}", pitch	) );
+			ds.Add( string.Format( "Roll  : {0,5:0.0}", roll	) );
+			
+			float stabPitch = - ( StabilizationFactor * MaxRPM * pitch / 180.0f )  -  ( StabilizationDamping * MaxRPM / 180.0f * pitchV );
+			float stabRoll  = - ( StabilizationFactor * MaxRPM * roll  / 180.0f )  -  ( StabilizationDamping * MaxRPM / 180.0f * rollV  );
+
+			trpm1 -= stabRoll;
+			trpm2 -= stabRoll;
+			trpm3 += stabRoll;
+			trpm4 += stabRoll;
+
+			trpm1 -= stabPitch;
+			trpm2 += stabPitch;
+			trpm3 += stabPitch;
+			trpm4 -= stabPitch;
+
+
 		}
 
 
