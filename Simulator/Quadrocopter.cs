@@ -179,6 +179,8 @@ namespace Simulator {
 
 			float avgRpm = ( gps.Triggers.Left + world.Mouse3DTranslation.Y / 1.0f ) * MaxRPM;
 
+			if (ks.IsKeyDown(Keys.NumPad8)) avgRpm = MaxRPM;
+
 			trpm1 = avgRpm;
 			trpm2 = avgRpm;
 			trpm3 = avgRpm;
