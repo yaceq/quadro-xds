@@ -24,8 +24,8 @@ namespace Simulator {
 			graphics = new GraphicsDeviceManager( this );
 
 			this.AddServiceAndComponent( new Settings( this ) );
-			this.AddServiceAndComponent( new DebugStrings( this, "debugFont", 1 ) );
 			this.AddServiceAndComponent( new World( this, @"scenes\plane" ) );
+			this.AddServiceAndComponent( new DebugStrings( this, "debugFont", 1 ) );
 
 			this.GetService<Settings>().LoadSettings();
 

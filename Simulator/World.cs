@@ -39,6 +39,8 @@ namespace Simulator {
 
 		public Tracker	Tracker;
 
+		public AudioListener	Listener;
+
 
 		/// <summary>
 		/// Constructor
@@ -78,9 +80,12 @@ namespace Simulator {
 			space.Add( staticMesh );
 			drawer.Add( staticMesh );
 				
-			quadrocopter =	new Quadrocopter( Game, this );
-
 			Connect3DMouse();
+
+			Listener	=	new AudioListener();
+
+
+			quadrocopter =	new Quadrocopter( Game, this );
 
 			base.Initialize();
 		}
@@ -203,6 +208,7 @@ namespace Simulator {
 			worldTime = gameTime;
 
 
+
 			base.Update( gameTime );
 		}
 
@@ -253,6 +259,11 @@ namespace Simulator {
 				currentViewMatrix = MathX.LerpMatrix( currentViewMatrix, view, 0.9f );
 				//view = currentViewMatrix;
 			}
+
+			Listener.Position	=	Matrix.Invert(view).Translation;
+			Listener.Forward	=	Matrix.Invert(view).Forward;
+			Listener.Up			=	Matrix.Invert(view).Up;
+
 
 			quadrocopter.Draw( dt, view, proj );
 
