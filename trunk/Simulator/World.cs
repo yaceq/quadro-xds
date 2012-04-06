@@ -30,6 +30,7 @@ namespace Simulator {
 		Model		worldModel;
 		Space		space;
 		ModelDrawer	drawer;
+		public GameTime	worldTime;
 
 		public Space		Space	{ get { return space;	} }
 		public ModelDrawer	Drawer	{ get { return drawer;	} }
@@ -199,6 +200,7 @@ namespace Simulator {
 			space.Update( (float)gameTime.ElapsedGameTime.TotalSeconds );
 			drawer.Update();
 
+			worldTime = gameTime;
 
 
 			base.Update( gameTime );
