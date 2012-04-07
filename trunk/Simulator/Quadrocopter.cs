@@ -65,6 +65,8 @@ namespace Simulator {
 		float	rot3 = 0;
 		float	rot4 = 0;
 
+		float	targetHeight = 0;
+
 		Vector3	arm1	=	(float)Math.Sqrt(2)/2 * ( Vector3.Right + Vector3.Forward  );
 		Vector3	arm2	=	(float)Math.Sqrt(2)/2 * ( Vector3.Right + Vector3.Backward );
 		Vector3	arm3	=	(float)Math.Sqrt(2)/2 * ( Vector3.Left  + Vector3.Backward );
