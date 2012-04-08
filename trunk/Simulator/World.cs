@@ -224,6 +224,8 @@ namespace Simulator {
 		/// <param name="gameTime"></param>
 		public override void Draw ( GameTime gameTime )
 		{
+			var dr = Game.GetService<DebugRender>();
+
 			var dt  = (float)gameTime.ElapsedGameTime.TotalSeconds;
 			var cfg	= Game.GetService<Settings>().Configuration;
 
@@ -273,6 +275,8 @@ namespace Simulator {
 			if ( cfg.ShowBodies ) {
 				drawer.Draw( view, proj );
 			}
+
+			dr.SetMatrix( view, proj );
 
 			base.Draw( gameTime );
 
