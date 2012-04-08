@@ -83,6 +83,8 @@ namespace Simulator {
 		AudioEmitter			liftSoundEmitter4;
 		
 
+		List<Vector3>			wayPoints = new List<Vector3>();
+
 
 		public Vector3 Position { get { return box.WorldTransform.Translation; } }
 		public Matrix  Transform { get { return box.WorldTransform; } }
@@ -176,10 +178,10 @@ namespace Simulator {
 			ApplyForceLL( ref box, dt, arm3, arm4 * rpm2torque * rpm3 * rpm3 );
 			ApplyForceLL( ref box, dt, arm4, arm3 * rpm2torque * rpm4 * rpm4 );
 
-			rot1 += rpm1 * dt / 200.0f;
-			rot2 += rpm2 * dt / 200.0f;
-			rot3 += rpm3 * dt / 200.0f;
-			rot4 += rpm4 * dt / 200.0f;
+			rot1 += rpm1 * dt / 100.0f;
+			rot2 += rpm2 * dt / 100.0f;
+			rot3 += rpm3 * dt / 100.0f;
+			rot4 += rpm4 * dt / 100.0f;
 
 
 			liftSoundEmitter1.Position = Vector3.Transform( arm1 * ArmLength, box.WorldTransform );
@@ -209,6 +211,9 @@ namespace Simulator {
 			box.AngularMomentum = box.WorldTransform.Up * rpm2torque * rpm2 * rpm2;
 			box.AngularMomentum = box.WorldTransform.Up * rpm2torque * rpm3 * rpm3;
 			box.AngularMomentum = box.WorldTransform.Up * rpm2torque * rpm4 * rpm4;*/
+		
+			var dr = game.GetService<DebugRender>();
+
 		}
 
 
@@ -232,6 +237,7 @@ namespace Simulator {
 
 			}
 		}
+
 
 
 		public void DirectControl (float dt)
@@ -274,7 +280,9 @@ namespace Simulator {
 		}
 
 
-		float oldPitch, oldRoll;
+
+
+		float oldYaw, oldPitch, oldRoll;
 
 		public void Stabilize(float dt)
 		{
@@ -290,11 +298,13 @@ namespace Simulator {
 			pitch	= MathHelper.ToDegrees( pitch );
 			roll	= MathHelper.ToDegrees( roll );
 
-			var rollV  = (oldRoll  - roll ) / dt;
-			var pitchV = (oldPitch - pitch) / dt;
+			var rollV	= (oldRoll  - roll ) / dt;
+			var pitchV	= (oldPitch - pitch) / dt;
+			var yawV	= (oldYaw   - yaw  ) / dt;
 
 			oldRoll		=	roll;
 			oldPitch	=	pitch;
+			oldYaw		=	yaw;
 
 			ds.Add( string.Format( "Yaw   : {0,5:0.0}", yaw		) );
 			ds.Add( string.Format( "Pitch : {0,5:0.0}", pitch	) );
@@ -302,6 +312,7 @@ namespace Simulator {
 			
 			float stabPitch = - ( StabilizationFactor * MaxRPM * pitch / 180.0f )  -  ( StabilizationDamping * MaxRPM / 180.0f * pitchV );
 			float stabRoll  = - ( StabilizationFactor * MaxRPM * roll  / 180.0f )  -  ( StabilizationDamping * MaxRPM / 180.0f * rollV  );
+			float stabYaw	= -  ( StabilizationDamping * MaxRPM / 180.0f * yawV   );
 
 			trpm1 -= stabRoll;
 			trpm2 -= stabRoll;
@@ -312,6 +323,33 @@ namespace Simulator {
 			trpm2 += stabPitch;
 			trpm3 += stabPitch;
 			trpm4 -= stabPitch;
+
+			trpm1 += stabYaw;
+			trpm2 -= stabYaw;
+			trpm3 += stabYaw;
+			trpm4 -= stabYaw;
+
+
+			/*float rpm2thrust = MaxRotorThrust / ( MaxRPM * MaxRPM );
+
+			Vector3 globalDir = GetTargetPosition() - box.WorldTransform.Translation;
+			Vector3 localDir  = Vector3.TransformNormal( globalDir, Matrix.Invert(box.WorldTransform) );
+			localDir.Normalize();
+
+			trpm1 += MaxRPM * localDir.Y;
+			trpm2 += MaxRPM * localDir.Y;
+			trpm3 += MaxRPM * localDir.Y;
+			trpm4 += MaxRPM * localDir.Y;*/
+
+			/*trpm1 -= MaxRPM * localDir.X;
+			trpm2 += MaxRPM * localDir.X;
+			trpm3 += MaxRPM * localDir.X;
+			trpm4 -= MaxRPM * localDir.X;
+
+			trpm1 += MaxRPM * localDir.Z;
+			trpm2 -= MaxRPM * localDir.Z;
+			trpm3 += MaxRPM * localDir.Z;
+			trpm4 -= MaxRPM * localDir.Z;*/
 
 
 		}

@@ -25,6 +25,7 @@ namespace Simulator {
 
 			this.AddServiceAndComponent( new Settings( this ) );
 			this.AddServiceAndComponent( new World( this, @"scenes\plane" ) );
+			this.AddServiceAndComponent( new DebugRender( this ) );
 			this.AddServiceAndComponent( new DebugStrings( this, "debugFont", 1 ) );
 
 			this.GetService<Settings>().LoadSettings();
@@ -94,7 +95,9 @@ namespace Simulator {
 		protected override void Update ( GameTime gameTime )
 		{
 			var ds = this.GetService<DebugStrings>();
+			var dr = this.GetService<DebugRender>();
 			ds.Clear();
+			dr.Clear();
 
 			ds.Add( string.Format("FPS = {0:0.00}", 1 / gameTime.ElapsedGameTime.TotalSeconds ) );
 
@@ -153,10 +156,10 @@ namespace Simulator {
 					effect.EnableDefaultLighting();
 					//effect.DiffuseColor	=	color.ToVector3();
 
-					effect.FogColor		=	(new Color(83,90,99)).ToVector3();
+					effect.FogColor		=	(Color.CornflowerBlue).ToVector3();
 					effect.FogEnabled	=	true;
-					effect.FogStart		=	500;
-					effect.FogEnd		=	2000;
+					effect.FogStart		=	100;
+					effect.FogEnd		=	1500;
 				}	
 			}
 
