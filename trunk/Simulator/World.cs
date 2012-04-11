@@ -37,6 +37,8 @@ namespace Simulator {
 
 		public	Quadrocopter quadrocopter;
 
+		public	List<Quadrocopter> quadrocopters_list;
+
 		public Tracker	Tracker;
 
 		public AudioListener	Listener;
@@ -84,8 +86,9 @@ namespace Simulator {
 
 			Listener	=	new AudioListener();
 
+			quadrocopters_list = new List<Quadrocopter>() { new Quadrocopter(Game, this, Vector3.Zero) };
 
-			quadrocopter =	new Quadrocopter( Game, this );
+			quadrocopter = quadrocopters_list[0];
 
 			base.Initialize();
 		}
@@ -200,7 +203,11 @@ namespace Simulator {
 			}
 
 
-			quadrocopter.Update( dt );
+			//quadrocopter.Update( dt );
+			foreach (var quadrocop in quadrocopters_list)
+			{
+				quadrocop.Update(dt);
+			}
 
 			space.Update( (float)gameTime.ElapsedGameTime.TotalSeconds );
 			drawer.Update();
@@ -267,7 +274,11 @@ namespace Simulator {
 			Listener.Up			=	Matrix.Invert(view).Up;
 
 
-			quadrocopter.Draw( dt, view, proj );
+			//quadrocopter.Draw( dt, view, proj );
+			foreach (var quadrocop in quadrocopters_list)
+			{
+				quadrocop.Draw(dt, view, proj);
+			}
 
 			SimulatorGame.DrawModel( worldModel, Matrix.Identity, view, proj );
 

@@ -90,7 +90,7 @@ namespace Simulator {
 		public Matrix  Transform { get { return box.WorldTransform; } }
 																					   
 
-		public Quadrocopter( Game game, World world )
+		public Quadrocopter( Game game, World world, Vector3 position )
 		{
 			MaxRPM			=	20000;	//	rotations per minute
 			MaxRotorThrust	=	2.75f;	//	1100 gramms / 4 motors
@@ -114,7 +114,7 @@ namespace Simulator {
 			propellerA		=	game.Content.Load<Model>( @"scenes\propellerA" );
 			propellerB		=	game.Content.Load<Model>( @"scenes\propellerB" );
 
-			box	=	new Box( Vector3.Up * LinearSize.Y/2, LinearSize.X, LinearSize.Y, LinearSize.Z, Mass );
+			box	=	new Box( position + Vector3.Up * LinearSize.Y/2, LinearSize.X, LinearSize.Y, LinearSize.Z, Mass );
 			box.AngularDamping = 0.2f;
 			box.LinearDamping  = 0.2f;
 			world.Space.Add( box );
