@@ -27,7 +27,9 @@ namespace Simulator {
 			InitializeComponent();
 
 			settingsPropertyGrid.SelectedObject = game.GetService<Settings>().Configuration;
-			quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopter;
+			//quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopter;
+			quadrocopterPropertyGrid.SelectedObjects = game.GetService<World>().quadrocopters_list.ToArray();
+
 
 			settingsPropertyGrid.CollapseAllGridItems();
 			quadrocopterPropertyGrid.CollapseAllGridItems();
