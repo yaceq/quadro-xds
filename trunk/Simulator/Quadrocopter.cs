@@ -101,7 +101,7 @@ namespace Simulator {
 			LinearSize		=	new Vector3( 0.4f, 0.10f, 0.4f );
 			
 			EnableStabilization		=	true;
-			StabilizationFactor		=	-0.7f;
+			StabilizationFactor		=	-0.3f;
 			StabilizationDamping	=	 0.5f;
 
 			TrackingObjectName	=	"Quadrocopter";
@@ -306,9 +306,13 @@ namespace Simulator {
 			oldPitch	=	pitch;
 			oldYaw		=	yaw;
 
-			ds.Add( string.Format( "Yaw   : {0,5:0.0}", yaw		) );
-			ds.Add( string.Format( "Pitch : {0,5:0.0}", pitch	) );
-			ds.Add( string.Format( "Roll  : {0,5:0.0}", roll	) );
+			ds.Add( string.Format( "Yaw     : {0,5:0.0}", yaw		) );
+			ds.Add( string.Format( "Pitch   : {0,5:0.0}", pitch	) );
+			ds.Add( string.Format( "Roll    : {0,5:0.0}", roll	) );
+			
+			ds.Add( string.Format( "Speed   : {0,5:0.0}", box.LinearVelocity.Flattern(Vector3.Up).Length() ) );
+			ds.Add( string.Format( "Speed H : {0,5:0.0}", box.LinearVelocity.Y ) );
+			ds.Add( string.Format( "Alt.    : {0,5:0.0}", box.Position.Y	) );
 			
 			float stabPitch = - ( StabilizationFactor * MaxRPM * pitch / 180.0f )  -  ( StabilizationDamping * MaxRPM / 180.0f * pitchV );
 			float stabRoll  = - ( StabilizationFactor * MaxRPM * roll  / 180.0f )  -  ( StabilizationDamping * MaxRPM / 180.0f * rollV  );
