@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle( "Firmware" )]
+[assembly: AssemblyTitle( "LedBlink" )]
 [assembly: AssemblyDescription( "" )]
 [assembly: AssemblyConfiguration( "" )]
 [assembly: AssemblyCompany( "Hewlett-Packard Company" )]
-[assembly: AssemblyProduct( "Firmware" )]
+[assembly: AssemblyProduct( "LedBlink" )]
 [assembly: AssemblyCopyright( "Copyright © Hewlett-Packard Company 2012" )]
 [assembly: AssemblyTrademark( "" )]
 [assembly: AssemblyCulture( "" )]

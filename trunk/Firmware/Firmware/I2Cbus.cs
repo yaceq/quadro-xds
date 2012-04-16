@@ -101,6 +101,22 @@ namespace Firmware {
             Read(config, readBuffer, transactionTimeout);
         }
 
+
+		/// <summary>
+		/// .....
+		/// </summary>
+		/// <param name="config"></param>
+		/// <param name="register"></param>
+		/// <param name="transactionTimeout"></param>
+		/// <returns></returns>
+		public byte ReadRegister ( I2CDevice.Configuration config, byte register, int transactionTimeout)
+		{
+			var buf = new byte[1];
+			ReadRegister( config, register, buf, transactionTimeout );
+			return buf[0];
+		} 
+
+
         /// <summary>
         /// Write array of bytes value to a specific register on the I2C slave device.
         /// </summary>
