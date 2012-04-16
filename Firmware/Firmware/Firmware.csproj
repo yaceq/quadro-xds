@@ -34,6 +34,7 @@
     <Compile Include="GyroscopePlug.cs" />
     <Compile Include="I2Cbus.cs" />
     <Compile Include="I2CPlug.cs" />
+    <Compile Include="ITG3200.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
