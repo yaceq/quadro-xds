@@ -71,6 +71,9 @@ namespace I2CDev
             {
                 //throw new Exception("Could not read from device.");
                 Debug.Print("Could not read from device.\n");
+                this.i2cDevice.Dispose();
+                this.i2cDevice = new I2CDevice(this.i2cConfig);
+                WriteToRegister(0x3e, 0x80);
             }
         }
 
