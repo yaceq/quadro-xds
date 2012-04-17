@@ -17,23 +17,37 @@ namespace I2CDev
             Thread.Sleep(100);
             gyro.WriteToRegister(0x15, 0x00);
             Thread.Sleep(100);
-            gyro.WriteToRegister(0x16, 0x18);
+            gyro.WriteToRegister(0x16, 0x19);
             Thread.Sleep(100);
-            //gyro.WriteToRegister(0x17, 0x05);
+            gyro.WriteToRegister(0x17, 0x01);
+            Thread.Sleep(100);
 
             byte[] readBuffer = new byte[1] { 0 };
             int i = 0;
             for (; ; )
             {
-                Debug.Print("Iteration : " + i.ToString() + "\n");
-                gyro.ReadFromRegister(0x00, readBuffer);
-                Debug.Print("ID : " + readBuffer[0].ToString() + "\n");
-                gyro.ReadFromRegister(0x1d, readBuffer);
-                Debug.Print(readBuffer[0].ToString() + "\n");
-                gyro.ReadFromRegister(0x1e, readBuffer);
-                Debug.Print(readBuffer[0].ToString() + "\n");
-                Thread.Sleep(100);
+                gyro.ReadFromRegister(0x1a, readBuffer);
+                if ( (byte)(readBuffer[0] & 0x01) == 0x01)
+                {
+                    Debug.Print("Iteration : " + i.ToString() + "\n");
+                    gyro.ReadFromRegister(0x00, readBuffer);
+                    Debug.Print("ID : " + readBuffer[0].ToString() + "\n");
+                    gyro.ReadFromRegister(0x1d, readBuffer);
+                    Debug.Print(readBuffer[0].ToString() + "\n");
+                    gyro.ReadFromRegister(0x1e, readBuffer);
+                    Debug.Print(readBuffer[0].ToString() + "\n");
+                    gyro.ReadFromRegister(0x1f, readBuffer);
+                    Debug.Print(readBuffer[0].ToString() + "\n");
+                    gyro.ReadFromRegister(0x20, readBuffer);
+                    Debug.Print(readBuffer[0].ToString() + "\n");
+                    gyro.ReadFromRegister(0x21, readBuffer);
+                    Debug.Print(readBuffer[0].ToString() + "\n");
+                    gyro.ReadFromRegister(0x22, readBuffer);
+                    Debug.Print(readBuffer[0].ToString() + "\n");
+                    
+                }
                 i++;
+                //Thread.Sleep(1000);
             }
             
         }
