@@ -2,10 +2,8 @@ using System;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
-using SecretLabs.NETMF.Hardware;
-using SecretLabs.NETMF.Hardware.Netduino;
 
-#if false
+
 namespace Firmware {
 	public class ITG3200 {
 
@@ -100,7 +98,7 @@ namespace Firmware {
 
 		public ITG3200() 
 		{
-			config	=	new I2CDevice.Configuration( ITG3200_ADDR_AD0_LOW, 10 );
+			config	=	new I2CDevice.Configuration( ITG3200_ADDR_AD0_LOW, 400 );
 			bus		=	I2CBus.GetInstance();
 
 			setOffsets( 0,0,0 );
@@ -115,7 +113,7 @@ namespace Firmware {
 		  // Uncomment or change your default ITG3200 initialization
   
 		  // fast sample rate - divisor = 0 filter = 0 clocksrc = 0, 1, 2, or 3  ( raw values )
-		  //init( address, NOSRDIVIDER, RANGE2000, BW256_SR8, PLL_XGYRO_REF, true, true );
+		  init( address, NOSRDIVIDER, RANGE2000, BW256_SR8, PLL_XGYRO_REF, true, true );
   
 		  // slow sample rate - divisor = 0  filter = 1,2,3,4,5, or 6  clocksrc = 0, 1, 2, or 3  ( raw values )
 		  //init( NOSRDIVIDER, RANGE2000, BW010_SR1, INTERNALOSC, true, true );
@@ -124,7 +122,7 @@ namespace Firmware {
 		  //init( NOSRDIVIDER, RANGE2000, BW256_SR8, PLL_EXTERNAL32, true, true );
   
 		  // slow sample rate 32Khz external clock - divisor = 0  filter = 1,2,3,4,5, or 6  clocksrc = 4  ( raw values )
-		  init( address, NOSRDIVIDER, RANGE2000, BW010_SR1, PLL_EXTERNAL32, true, true );
+		  //init( address, NOSRDIVIDER, RANGE2000, BW010_SR1, PLL_EXTERNAL32, true, true );
 		}
 
 		public void init( byte address, byte _SRateDiv, byte _Range, byte _filterBW, byte _ClockSrc, bool _ITGReady, bool _INTRawDataReady ) 
@@ -399,4 +397,3 @@ namespace Firmware {
 
 	}
 }
-#endif

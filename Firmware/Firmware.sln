@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firmware", "Firmware\Firmware.csproj", "{4646AFCE-CB4C-4C8B-96FA-0943C08DFD3A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LedBlink", "LedBlink\LedBlink.csproj", "{D5065882-D60C-4E52-910F-60756E27DF7B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LedBlinkP2", "LedBlinkP2\LedBlinkP2.csproj", "{39D39F55-5644-464C-9ADF-A0FC7BC1C82F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GyroP2", "GyroP2\GyroP2.csproj", "{7B59FDFB-96CD-4A96-A28C-0F22963A81B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiTest", "WifiTest\WifiTest.csproj", "{38382383-2290-4902-A879-EDADFA024B85}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4646AFCE-CB4C-4C8B-96FA-0943C08DFD3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4646AFCE-CB4C-4C8B-96FA-0943C08DFD3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4646AFCE-CB4C-4C8B-96FA-0943C08DFD3A}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{4646AFCE-CB4C-4C8B-96FA-0943C08DFD3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4646AFCE-CB4C-4C8B-96FA-0943C08DFD3A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4646AFCE-CB4C-4C8B-96FA-0943C08DFD3A}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{D5065882-D60C-4E52-910F-60756E27DF7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5065882-D60C-4E52-910F-60756E27DF7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5065882-D60C-4E52-910F-60756E27DF7B}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{D5065882-D60C-4E52-910F-60756E27DF7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5065882-D60C-4E52-910F-60756E27DF7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5065882-D60C-4E52-910F-60756E27DF7B}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{39D39F55-5644-464C-9ADF-A0FC7BC1C82F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39D39F55-5644-464C-9ADF-A0FC7BC1C82F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39D39F55-5644-464C-9ADF-A0FC7BC1C82F}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{39D39F55-5644-464C-9ADF-A0FC7BC1C82F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39D39F55-5644-464C-9ADF-A0FC7BC1C82F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39D39F55-5644-464C-9ADF-A0FC7BC1C82F}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{7B59FDFB-96CD-4A96-A28C-0F22963A81B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B59FDFB-96CD-4A96-A28C-0F22963A81B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B59FDFB-96CD-4A96-A28C-0F22963A81B1}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{7B59FDFB-96CD-4A96-A28C-0F22963A81B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B59FDFB-96CD-4A96-A28C-0F22963A81B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B59FDFB-96CD-4A96-A28C-0F22963A81B1}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{38382383-2290-4902-A879-EDADFA024B85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38382383-2290-4902-A879-EDADFA024B85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38382383-2290-4902-A879-EDADFA024B85}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{38382383-2290-4902-A879-EDADFA024B85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38382383-2290-4902-A879-EDADFA024B85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38382383-2290-4902-A879-EDADFA024B85}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

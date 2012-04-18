@@ -1,35 +1,20 @@
 ﻿using System;
 using System.Threading;
+
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
-using SecretLabs.NETMF.Hardware;
-using SecretLabs.NETMF.Hardware.Netduino;
 
-namespace Firmware {
+using GHIElectronics.NETMF.FEZ;
+using Firmware;
+
+namespace LedBlinkP2 {
 	public class Program {
-
 		public static void Main ()
 		{
-			Debug.Print("Starting...");
-			Thread.Sleep(100);
-
-			MMA7660	accel = new MMA7660();
-
-			Debug.Print("Init...");
-			accel.Init();
-
-
-			while (true) {
-
-				accel.Update();
-				Debug.Print("A = " + accel.AccelX + " " + accel.AccelY + " " + accel.AccelZ );
-				
-				Thread.Sleep(500);
-			}
-			
-			
-			#if false
 			ITG3200	gyro = new ITG3200();
+
+			/*Wire.begin();      // if experiencing gyro problems/crashes while reading XYZ values
+								// please read class constructor comments for further info.*/
 
 			Debug.Print("Starting...");
 
@@ -45,11 +30,11 @@ namespace Firmware {
 			  
 			Debug.Print("Done.");
 
+
 			while (true) {
 
 				while (gyro.isRawDataReady()) {
-     
-					// Reads calibrated values in deg/sec    
+
 					float x,y,z;
 
 					gyro.readGyro( out x, out y, out z ); 
@@ -61,7 +46,7 @@ namespace Firmware {
 				}				
 
 			}
-			#endif
 		}
+
 	}
 }
