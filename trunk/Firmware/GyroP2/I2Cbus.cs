@@ -2,7 +2,6 @@ using System;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 
-#if false
 namespace Firmware {
 	public class I2CBus : IDisposable
     {
@@ -147,4 +146,3 @@ namespace Firmware {
 
     }
 }
-#endif
