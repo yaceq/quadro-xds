@@ -17,7 +17,7 @@ namespace I2CDev
             Thread.Sleep(100);
             gyro.WriteToRegister(0x15, 0x00);
             Thread.Sleep(100);
-            gyro.WriteToRegister(0x16, 0x19);
+            gyro.WriteToRegister(0x16, 0x18);
             Thread.Sleep(100);
             gyro.WriteToRegister(0x17, 0x01);
             Thread.Sleep(100);
