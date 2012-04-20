@@ -180,5 +180,30 @@ namespace Misc {
 				DrawLine( points[i], points[i+1], color );
 			}
 		}
+
+
+		public void DrawBox ( BoundingBox box, Color color )
+		{
+			var corners = box.GetCorners();
+			
+			foreach (var p in corners) {
+				DrawPoint( p, 0.1f, color );
+			}
+
+			DrawLine( corners[0], corners[1], color );
+			DrawLine( corners[1], corners[2], color );
+			DrawLine( corners[2], corners[3], color );
+			DrawLine( corners[3], corners[0], color );
+
+			DrawLine( corners[4], corners[5], color );
+			DrawLine( corners[5], corners[6], color );
+			DrawLine( corners[6], corners[7], color );
+			DrawLine( corners[7], corners[4], color );
+
+			DrawLine( corners[4], corners[0], color );
+			DrawLine( corners[5], corners[1], color );
+			DrawLine( corners[6], corners[2], color );
+			DrawLine( corners[7], corners[3], color );
+		}
 	}
 }
