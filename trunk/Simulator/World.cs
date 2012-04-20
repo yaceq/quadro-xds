@@ -24,7 +24,7 @@ namespace Simulator {
 	/// <summary>
 	/// This is a game component that implements IUpdateable.
 	/// </summary>
-	public class World : Microsoft.Xna.Framework.DrawableGameComponent {
+	public partial class World : Microsoft.Xna.Framework.DrawableGameComponent {
 
 		string		worldModelName;
 		Model		worldModel;
@@ -215,6 +215,7 @@ namespace Simulator {
 			worldTime = gameTime;
 
 
+			UpdateAerodynamicForces( dt );
 
 			base.Update( gameTime );
 		}

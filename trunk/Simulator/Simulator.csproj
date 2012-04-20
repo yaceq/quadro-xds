@@ -141,6 +141,7 @@
     <Compile Include="Settings.cs" />
     <Compile Include="SimulatorGame.cs" />
     <Compile Include="Tracker.cs" />
+    <Compile Include="World.Aero.cs" />
     <Compile Include="World.cs" />
   </ItemGroup>
   <ItemGroup>
