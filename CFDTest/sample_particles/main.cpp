@@ -34,6 +34,44 @@ void shutdown()
 }
 
 
+
+void drawbox(float xsz, float ysz, float zsz)
+{
+	glBegin(GL_LINES);
+
+		glColor4f (1,0,0,1);
+		glVertex3f(0,0,0);
+		glVertex3f(1,0,0);
+
+		glColor4f (0,1,0,1);
+		glVertex3f(0,0,0);
+		glVertex3f(0,1,0);
+
+		glColor4f (0,0,1,1);
+		glVertex3f(0,0,0);
+		glVertex3f(0,0,1);
+
+		glColor4f (1,1,1,1);
+		
+		glVertex3f(  xsz/2,  ysz/2, -zsz/2 );	 	glVertex3f( -xsz/2,  ysz/2, -zsz/2 );
+		glVertex3f( -xsz/2,  ysz/2, -zsz/2 );	 	glVertex3f( -xsz/2, -ysz/2, -zsz/2 );
+		glVertex3f( -xsz/2, -ysz/2, -zsz/2 );	 	glVertex3f(  xsz/2, -ysz/2, -zsz/2 );
+		glVertex3f(  xsz/2, -ysz/2, -zsz/2 );	 	glVertex3f(  xsz/2,  ysz/2, -zsz/2 );
+												 	
+		glVertex3f(  xsz/2,  ysz/2,  zsz/2 );	 	glVertex3f( -xsz/2,  ysz/2,  zsz/2 );
+		glVertex3f( -xsz/2,  ysz/2,  zsz/2 );	 	glVertex3f( -xsz/2, -ysz/2,  zsz/2 );
+		glVertex3f( -xsz/2, -ysz/2,  zsz/2 );	 	glVertex3f(  xsz/2, -ysz/2,  zsz/2 );
+		glVertex3f(  xsz/2, -ysz/2,  zsz/2 );	 	glVertex3f(  xsz/2,  ysz/2,  zsz/2 );
+												 	
+		glVertex3f(  xsz/2,  ysz/2, -zsz/2 );	 	glVertex3f(  xsz/2,  ysz/2,  zsz/2 );
+		glVertex3f( -xsz/2,  ysz/2, -zsz/2 );	 	glVertex3f( -xsz/2,  ysz/2,  zsz/2 );
+		glVertex3f( -xsz/2, -ysz/2, -zsz/2 );	 	glVertex3f( -xsz/2, -ysz/2,  zsz/2 );
+		glVertex3f(  xsz/2, -ysz/2, -zsz/2 );	 	glVertex3f(  xsz/2, -ysz/2,  zsz/2 );
+												 	
+	glEnd();
+}
+
+
 void display()
 {
     g_system->Update(0.005f, g_view_dist);
@@ -74,6 +112,7 @@ void display()
 		glDisableClientState(GL_VERTEX_ARRAY);
 		glDisableClientState(GL_COLOR_ARRAY);
 
+		drawbox( 32,32,32 );
 
 
         // print stats
