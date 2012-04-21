@@ -99,7 +99,7 @@ void display()
 		glRotatef(g_view_theta, 1, 0, 0);
 		glRotatef(g_view_phi, 0, 1, 0);
 
-		glColor3f( 0.8f/3, 0.9f/3, 1.0f/3 );
+		glColor3f( 0.8f/6, 0.9f/6, 1.0f/6 );
 
 
 		glBindBuffer(GL_ARRAY_BUFFER, solver->get_vbo());
