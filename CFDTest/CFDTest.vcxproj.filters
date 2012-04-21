@@ -23,12 +23,13 @@
     <ClCompile Include="common\src\stopwatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cfd_solver.cpp">
+    <ClCompile Include="sample_particles\cfd_solver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="sample_particles\particles.cu" />
+    <CudaCompile Include="sample_particles\cfd_solver.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sample_particles\particles.h">
@@ -40,7 +41,7 @@
     <ClInclude Include="common\inc\stopwatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cfd_solver.h">
+    <ClInclude Include="sample_particles\cfd_solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
