@@ -9,7 +9,7 @@ class cfd_solver {
 		void		solve			( float dt );
 
 		GLuint		get_vbo			( void ) { return m_vbo; }
-		uint		get_prt_num		( void ) { return prt_num; }
+		uint		get_prt_num		( void ) { return m_particle_num; }
 
 	protected:
 		
@@ -22,14 +22,14 @@ class cfd_solver {
 		float	size_y;
 		float	size_z;
 
-		uint	prt_num;
+		uint	m_particle_num;
 				
 		GLuint					m_vbo;
 		cudaGraphicsResource	*m_vbo_cuda;
 
 		std::vector<float3>		m_position;
 
-		float3	*d_position[2];		//	particles position
+		float3	*d_position;		//	particles position
 		float3	*d_velocity[2];		//	fluid velocity field
 		float	*d_pressure[2];		//	fluid pressure field
 	};

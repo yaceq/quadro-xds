@@ -105,7 +105,7 @@ void display()
 		glBindBuffer(GL_ARRAY_BUFFER, solver->get_vbo());
 
 			glEnableClientState(GL_VERTEX_ARRAY);
-			glVertexPointer(3, GL_FLOAT, sizeof(Vertex), NULL);
+			glVertexPointer(3, GL_FLOAT, sizeof(float3), NULL);
 
 			//glEnableClientState(GL_COLOR_ARRAY);
 			//glColorPointer(4, GL_FLOAT, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
