@@ -12,7 +12,7 @@ __global__ void update_particles ( int particle_num, float3 *pos, float dt )
     if (tid >= particle_num) {
         return;
 	}
-	pos[tid].z = pos[tid].z;
+	pos[tid].z = pos[tid].z - dt;
 }
 
 

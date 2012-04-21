@@ -2,7 +2,7 @@
 #include "cfd_solver.h"
 
 
-const uint NUM_PARTICLES = 1024 * 16;
+const uint NUM_PARTICLES = 1024 * 16 * 16;
 
 
 float randf() {
