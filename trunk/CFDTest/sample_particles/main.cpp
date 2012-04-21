@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "particles.h"
+#include "cfd_solver.h"
 
 
 /*-----------------------------------------------------------------------------
@@ -8,29 +9,30 @@
 
 using namespace std;
 
-const int		PARTICLE_N = 10*1024;
-ParticleSystem *g_system = NULL;
-int		g_buttonState = 0;
-int		g_mouse_x = 0, g_mouse_y = 0;
-float	g_view_phi = 10, g_view_theta = 10;
-float	g_view_dist = 150.0f;
-int		g_w, g_h;
-bool	g_stereo;
+const int	PARTICLE_N = 10*1024;
+int			g_buttonState = 0;
+int			g_mouse_x = 0, g_mouse_y = 0;
+float		g_view_phi = 10, g_view_theta = 10;
+float		g_view_dist = 70.0f;
+int			g_w, g_h;
+bool		g_stereo;
 
 void shutdown();
+
+cfd_solver	*solver = NULL;
 
 
 void init()
 {
-    g_system = new ParticleSystem(PARTICLE_N);
+	solver	=	new cfd_solver(32, 32, 32);
 	atexit( shutdown );
 }
 
 
 void shutdown()
 {
-	delete g_system;
-	g_system  = NULL;
+	delete solver;
+	solver = NULL;
 }
 
 
@@ -74,9 +76,9 @@ void drawbox(float xsz, float ysz, float zsz)
 
 void display()
 {
-    g_system->Update(0.005f, g_view_dist);
+    solver->solve(0.016f);
 
-    float calc_time = g_system->getLastIterTime();
+    float calc_time = 0.016;
 
 	if (!g_stereo) {
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -89,7 +91,7 @@ void display()
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_ONE, GL_ONE);
-		//glPointSize(3);
+		glPointSize(1);
 		//glEnable(GL_POINT_SMOOTH);
 
 		glLoadIdentity();
@@ -97,16 +99,18 @@ void display()
 		glRotatef(g_view_theta, 1, 0, 0);
 		glRotatef(g_view_phi, 0, 1, 0);
 
+		glColor3f( 0.8f/3, 0.9f/3, 1.0f/3 );
 
-		glBindBuffer(GL_ARRAY_BUFFER, g_system->GetParticleVBO());
+
+		glBindBuffer(GL_ARRAY_BUFFER, solver->get_vbo());
 
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glVertexPointer(3, GL_FLOAT, sizeof(Vertex), NULL);
 
-			glEnableClientState(GL_COLOR_ARRAY);
-			glColorPointer(4, GL_FLOAT, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
+			//glEnableClientState(GL_COLOR_ARRAY);
+			//glColorPointer(4, GL_FLOAT, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
 
-			glDrawArrays(GL_POINTS, 0,  g_system->GetParticleNum());
+			glDrawArrays(GL_POINTS, 0,  solver->get_prt_num());
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glDisableClientState(GL_VERTEX_ARRAY);
@@ -122,9 +126,9 @@ void display()
         glLoadIdentity();
         glRasterPos2f(-0.9, 0.9);
 
-        std::ostringstream ss;
-        ss << "calc time: " << calc_time << "ms\nMode: " << mode_names[g_system->getRunMode()];
-        glutBitmapString(GLUT_BITMAP_9_BY_15, (const unsigned char*)ss.str().c_str());
+        //std::ostringstream ss;
+        //ss << "calc time: " << calc_time << "ms\nMode: " << mode_names[g_system->getRunMode()];
+        //glutBitmapString(GLUT_BITMAP_9_BY_15, (const unsigned char*)ss.str().c_str());
 
 		glutSwapBuffers();
 	} 
@@ -174,12 +178,6 @@ void keyboard(unsigned char key, int x, int y)
 	if (key==VK_ESCAPE) {
 		exit(0);
 	}
-    if (key == 'm')
-    {
-        int mode = g_system->getRunMode();
-        g_system->setRunMode((mode + 1) % MODE_NUM);
-
-    }
 }
 
 
@@ -207,7 +205,7 @@ int main(int argc, char **argv)
 	}
 	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE | (g_stereo ? GLUT_STEREO : 0));
     //glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
-    glutInitWindowSize(800, 600);
+    glutInitWindowSize(1280, 800);
 
     glutCreateWindow("CUDA n-body system");
 
