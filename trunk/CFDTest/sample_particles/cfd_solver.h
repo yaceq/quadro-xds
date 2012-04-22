@@ -13,7 +13,9 @@ class cfd_solver {
 
 	protected:
 		
+		void		init_gpu	();
 		void		launch_gpu	( float dt );
+		void		copy_back	( cudaArray *dst, float *src );
 
 		int nx, ny, nz;
 
@@ -29,8 +31,19 @@ class cfd_solver {
 
 		std::vector<float3>		m_position;
 
-		float3	*d_position;		//	particles position
-		float3	*d_velocity[2];		//	fluid velocity field
-		float	*d_pressure[2];		//	fluid pressure field
+		cudaExtent				volume_extent;
+		cudaChannelFormatDesc	volume_chan_desc;
+		int						volume_size;
+
+		cudaArray	*d_velocity_x_array;
+		cudaArray	*d_velocity_y_array;
+		cudaArray	*d_velocity_z_array;
+		cudaArray	*d_pressure_array;
+
+		float	*d_velocity_x;
+		float	*d_velocity_y;
+		float	*d_velocity_z;
+		float	*d_pressure;
+
 	};
 

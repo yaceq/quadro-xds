@@ -45,26 +45,49 @@ cfd_solver::cfd_solver( float xsz, float ysz, float zsz )
     CUDA_SAFE_CALL( cudaGraphicsGLRegisterBuffer(&m_vbo_cuda, m_vbo, cudaGraphicsMapFlagsNone) );
 
 	//	alloc CUDA buffers :
-	CUDA_SAFE_CALL( cudaMalloc( &d_position, total_grid_size * sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMalloc( &d_velocity[0], total_grid_size * sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMalloc( &d_pressure[0], total_grid_size * sizeof(float) ) );
+	volume_extent		=	make_cudaExtent( nx, ny, nz );
+	volume_chan_desc	=	cudaCreateChannelDesc<float>();
+	volume_size			=	sizeof(float) * nx * ny * nz;
 
-	CUDA_SAFE_CALL( cudaMalloc( &d_velocity[1], total_grid_size * sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMalloc( &d_pressure[1], total_grid_size * sizeof(float) ) );
+	std::vector<float> zero_array;
+	zero_array.resize( nx*ny*nz, 0 );
+	for (int i=0; i<zero_array.size(); i++) { zero_array[i] = randf_signed(); }
+	
+	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_velocity_x_array, &volume_chan_desc, volume_extent ) );
+	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_velocity_y_array, &volume_chan_desc, volume_extent ) );
+	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_velocity_z_array, &volume_chan_desc, volume_extent ) );
+	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_pressure_array,   &volume_chan_desc, volume_extent ) );
 
+	CUDA_SAFE_CALL( cudaMalloc( &d_velocity_x, volume_size ) );
+	CUDA_SAFE_CALL( cudaMalloc( &d_velocity_y, volume_size ) );
+	CUDA_SAFE_CALL( cudaMalloc( &d_velocity_z, volume_size ) );
+	CUDA_SAFE_CALL( cudaMalloc( &d_pressure,   volume_size ) );
 
-	//	fill buffers with zero :
-	CUDA_SAFE_CALL( cudaMemset( d_position, 0, total_grid_size * sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemset( d_velocity[0], 0, total_grid_size * sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemset( d_pressure[0], 0, total_grid_size * sizeof(float) ) );
+	CUDA_SAFE_CALL( cudaMemcpy( d_velocity_x, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpy( d_velocity_y, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpy( d_velocity_z, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpy( d_pressure,   &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
 
-	CUDA_SAFE_CALL( cudaMemset( d_velocity[1], 0, total_grid_size * sizeof(float3) ) );
-	CUDA_SAFE_CALL( cudaMemset( d_pressure[1], 0, total_grid_size * sizeof(float) ) );
+	//	fill array with zero :
+	copy_back( d_velocity_x_array, d_velocity_x );
+	copy_back( d_velocity_y_array, d_velocity_y );
+	copy_back( d_velocity_z_array, d_velocity_z );
+	copy_back( d_pressure_array,   d_pressure );
 
-	//	set initial particle positions :
-	//CUDA_SAFE_CALL( cudaMemcpy( d_position[0], &m_position[0], total_grid_size * sizeof(float3), cudaMemcpyHostToDevice ) );
+	init_gpu();
 }
 
+
+
+void cfd_solver::copy_back( cudaArray *dst, float *src )
+{
+    cudaMemcpy3DParms copyParams = {0};
+    copyParams.srcPtr   = make_cudaPitchedPtr( src, nx*sizeof(float), ny, nz );
+    copyParams.extent   = volume_extent;
+    copyParams.kind     = cudaMemcpyDeviceToDevice;
+    copyParams.dstArray = dst;
+	CUDA_SAFE_CALL( cudaMemcpy3D(&copyParams) )
+}
 
 
 cfd_solver::~cfd_solver(void)
@@ -75,5 +98,21 @@ cfd_solver::~cfd_solver(void)
 
 void cfd_solver::solve( float dt )
 {
+	std::vector<float> zero_array;
+	zero_array.resize( nx*ny*nz, 0 );
+	for (int i=0; i<zero_array.size(); i++) { zero_array[i] = randf_signed(); }
+
+	CUDA_SAFE_CALL( cudaMemcpy( d_velocity_x, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpy( d_velocity_y, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpy( d_velocity_z, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
+	CUDA_SAFE_CALL( cudaMemcpy( d_pressure,   &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
+
+	//	fill array with zero :
+	copy_back( d_velocity_x_array, d_velocity_x );
+	copy_back( d_velocity_y_array, d_velocity_y );
+	copy_back( d_velocity_z_array, d_velocity_z );
+	copy_back( d_pressure_array,   d_pressure );
+
+
 	launch_gpu( dt );
 }
