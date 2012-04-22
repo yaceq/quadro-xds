@@ -71,17 +71,48 @@ __global__ void update_particles ( int particle_num, float3 *pos, float dt, int 
 
 
 
-__global__ void propeller ( cudaPitchedPtr velocity, int nx, int ny, int nz )
+
+__global__ void advect( float *velx, float *vely, float *velz, float dt, int nx, int ny, int nz, float dx, float dy, float dz )
+{
+	int const x = blockIdx.x * blockDim.x + threadIdx.x;
+	int const y = blockIdx.y * blockDim.y + threadIdx.y;
+	int const z = blockIdx.z * blockDim.z + threadIdx.z;
+	int const i = x + y*nx + z*nx*ny;
+
+	float tx = ((float)x + 0.5f) / (float)nx;
+	float ty = ((float)y + 0.5f) / (float)ny;
+	float tz = ((float)z + 0.5f) / (float)nz;
+
+	float vx = tex3D( tex_velocity_x, tx, ty, tz );
+	float vy = tex3D( tex_velocity_y, tx, ty, tz );
+	float vz = tex3D( tex_velocity_z, tx, ty, tz );
+
+	velx[i]  = tex3D( tex_velocity_x,  tx - vx * dx * dt,  ty - vy * dy * dt,  tz - vz * dz * dt );
+	vely[i]  = tex3D( tex_velocity_y,  tx - vx * dx * dt,  ty - vy * dy * dt,  tz - vz * dz * dt );
+	velz[i]  = tex3D( tex_velocity_z,  tx - vx * dx * dt,  ty - vy * dy * dt,  tz - vz * dz * dt );
+}
+
+
+
+
+__global__ void propeller ( float *velx, float *vely, float *velz, int nx, int ny, int nz )
 {
 	//	cmpute voxel indices
 	int const x = blockIdx.x * blockDim.x + threadIdx.x;
 	int const y = blockIdx.y * blockDim.y + threadIdx.y;
 	int const z = blockIdx.z * blockDim.z + threadIdx.z;
+	int const i = x + y*nx + z*nx*ny;
   
-	float3 p = make_float3( x,y,z ) - make_float3( nx/2, ny/2, nz/3 );
-	float3 v = make_float3( length( p ), 0, 0 );
+	float3 v = make_float3(0,0,0);
 
-	write_array_3d_float3( velocity, x,y,z, v, nx,ny,nz );
+	if ( x >= 12 && x < 20 )
+	if ( y >= 12 && y < 20 )
+	if ( z >= 12 && z < 20 )
+		v = make_float3(0,1,0);
+
+	velx[i] += v.x;
+	vely[i] += v.y;
+	velz[i] += v.z;
 }
 
 /*-----------------------------------------------------------------------------
@@ -113,20 +144,27 @@ void cfd_solver::init_gpu()
 
 void cfd_solver::launch_gpu( float dt )
 {
+	float dx = size_x / nx;
+	float dy = size_y / ny;
+	float dz = size_z / nz;
+
     const int block_size_1d  = 128;		// num thread per block
     const int grid_size_1d   = iDivUp( m_particle_num, block_size_1d );	//	num grids
 
-/*	dim3 const block_size_3d ( 8, 8, 8 ); 
+	dim3 const block_size_3d ( 8, 8, 8 ); 
 	dim3 const grid_size_3d  ( iDivUp( nx, 8 ), iDivUp( ny, 8 ), iDivUp( nz, 8 ) );
-
-	int pitch_1d = d_pressure[0].pitch / sizeof( float );
-	int pitch_3d = d_velocity[0].pitch / sizeof( float3 );
-
 
 
 	//	make propeller turbulence :
+	advect<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, dt/8, nx, ny, nz, dx, dy, dz );
+	advect<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, dt/8, nx, ny, nz, dx, dy, dz );
+	advect<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, dt/8, nx, ny, nz, dx, dy, dz );
 
-	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity[0], nx, ny, nz );*/
+	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz );
+
+	copy_back( d_velocity_x_array, d_velocity_x );
+	copy_back( d_velocity_y_array, d_velocity_y );
+	copy_back( d_velocity_z_array, d_velocity_z );
 
 
 	//	update particles :
