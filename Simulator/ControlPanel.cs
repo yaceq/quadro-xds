@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -15,6 +16,7 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using Misc;
 using System.Windows.Forms.DataVisualization.Charting;
+using System.IO.Ports;
 
 namespace Simulator {
 	public partial class ControlPanel : Form {
@@ -236,7 +238,11 @@ namespace Simulator {
 			pitch = angle_x;
 			yaw = angle_y;
 			roll = angle_z;
-		}	
+		}
+
+		SerialPort	comPort;
+		Thread		thread;
+
 
 	}
 }
