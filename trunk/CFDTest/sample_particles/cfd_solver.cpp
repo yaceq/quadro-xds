@@ -51,7 +51,7 @@ cfd_solver::cfd_solver( float xsz, float ysz, float zsz )
 
 	std::vector<float> zero_array;
 	zero_array.resize( nx*ny*nz, 0 );
-	for (int i=0; i<zero_array.size(); i++) { zero_array[i] = randf_signed(); }
+	//for (int i=0; i<zero_array.size(); i++) { zero_array[i] = randf_signed(); }
 	
 	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_velocity_x_array, &volume_chan_desc, volume_extent ) );
 	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_velocity_y_array, &volume_chan_desc, volume_extent ) );
@@ -98,7 +98,7 @@ cfd_solver::~cfd_solver(void)
 
 void cfd_solver::solve( float dt )
 {
-	std::vector<float> zero_array;
+	/*std::vector<float> zero_array;
 	zero_array.resize( nx*ny*nz, 0 );
 	for (int i=0; i<zero_array.size(); i++) { zero_array[i] = randf_signed(); }
 
@@ -111,7 +111,7 @@ void cfd_solver::solve( float dt )
 	copy_back( d_velocity_x_array, d_velocity_x );
 	copy_back( d_velocity_y_array, d_velocity_y );
 	copy_back( d_velocity_z_array, d_velocity_z );
-	copy_back( d_pressure_array,   d_pressure );
+	copy_back( d_pressure_array,   d_pressure );*/
 
 
 	launch_gpu( dt );
