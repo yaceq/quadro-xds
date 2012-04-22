@@ -58,14 +58,14 @@ namespace ConsoleControl {
 					bufo[3] = (byte)( 200 * (gps.ThumbSticks.Left.X+1)/2 );		//	throttle
 					port.Write( bufo, 0, 4 );
 
-					Console.Write( "{0,10:X} : ", bufo[0] );
+					Console.Write( "{0,3:X} {0,3:X} {0,3:X} {0,3:X} : ", bufo[0], bufo[1], bufo[2], bufo[3] );
 
 
 
-					port.Read( bufi, 0, 1 );
+					port.Read( bufi, 0, 4 );
 					//port.
 
-					Console.Write( "{0,10:X} : ", bufi[0] );
+					Console.Write( "{0,3:X} {0,3:X} {0,3:X} {0,3:X} : ", bufi[0], bufi[1], bufi[2], bufi[3] );
 
 					Console.WriteLine();
 

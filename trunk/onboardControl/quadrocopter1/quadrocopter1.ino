@@ -49,15 +49,15 @@ int throttle4 = 10;
 
 void loop()
 {
-  if (Serial.available()) {
+  if (Serial.available()>=4) {
     throttle1 = map( Serial.read(), 0, 200, 10, 180 );
     throttle2 = throttle1;
     throttle3 = throttle1;
     throttle4 = throttle1;
     
-    int roll  = map( Serial.read(), 0,200, -100,100);
-    int pitch = map( Serial.read(), 0,200, -100,100);
-    int yaw   = map( Serial.read(), 0,200, -100,100);
+    int roll  = map( Serial.read(), 0,200, -throttle1/4, throttle1/4);
+    int pitch = map( Serial.read(), 0,200, -throttle1/4, throttle1/4);
+    int yaw   = map( Serial.read(), 0,200, -throttle1/4, throttle1/4);
     
     throttle1 -= roll;
     throttle2 -= roll;
@@ -74,15 +74,21 @@ void loop()
     throttle3 += yaw;
     throttle4 -= yaw;
     
-    Serial.write('q');
+    throttle1 = constrain( throttle1, 10, 180 );
+    throttle2 = constrain( throttle2, 10, 180 );
+    throttle3 = constrain( throttle3, 10, 180 );
+    throttle4 = constrain( throttle4, 10, 180 );
+    
+    Serial.write(throttle1);
+    Serial.write(throttle2);
+    Serial.write(throttle3);
+    Serial.write(throttle4);
   }
   
-  
-  
-  /*srv1.write( throttle1 );
+  srv1.write( throttle1 );
   srv2.write( throttle2 );
   srv3.write( throttle3 );
-  srv4.write( throttle4 );*/
+  srv4.write( throttle4 );
   
   delay(10);
 }
