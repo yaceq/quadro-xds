@@ -211,6 +211,10 @@ int main(int argc, char **argv)
 
     CUDA_SAFE_CALL( cudaGLSetGLDevice( 0 ) );
 
+	cudaDeviceProp prop;
+	cudaGetDeviceProperties( &prop, 0 );
+
+
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {

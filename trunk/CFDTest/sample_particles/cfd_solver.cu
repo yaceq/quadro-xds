@@ -148,11 +148,11 @@ void cfd_solver::launch_gpu( float dt )
 	float dy = size_y / ny;
 	float dz = size_z / nz;
 
-    const int block_size_1d  = 128;		// num thread per block
+    const int block_size_1d  = 64;		// num thread per block
     const int grid_size_1d   = iDivUp( m_particle_num, block_size_1d );	//	num grids
 
-	dim3 const block_size_3d ( 8, 8, 8 ); 
-	dim3 const grid_size_3d  ( iDivUp( nx, 8 ), iDivUp( ny, 8 ), iDivUp( nz, 8 ) );
+	dim3 block_size_3d ( 4, 4, 32 ); 
+	dim3 grid_size_3d  ( iDivUp( nx, block_size_3d.x ), iDivUp( ny, block_size_3d.y ), iDivUp( nz, block_size_3d.z ) );
 
 
 	//	make propeller turbulence :
@@ -161,6 +161,11 @@ void cfd_solver::launch_gpu( float dt )
 	advect<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, dt/8, nx, ny, nz, dx, dy, dz );
 
 	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz );
+
+	cudaError err = cudaGetLastError();
+    if( cudaSuccess != err) {                                           
+        fprintf(stderr, "Cuda error in file '%s' in line %i : %s.\n", __FILE__, __LINE__, cudaGetErrorString( err) );         
+    } 
 
 	copy_back( d_velocity_x_array, d_velocity_x );
 	copy_back( d_velocity_y_array, d_velocity_y );
