@@ -63,6 +63,9 @@
     <CudaCompile>
       <Include>common\inc;%(Include)</Include>
       <GPUDebugInfo>false</GPUDebugInfo>
+      <FastMath>true</FastMath>
+      <Optimization>Od</Optimization>
+      <CodeGeneration>compute_10,sm_10</CodeGeneration>
     </CudaCompile>
     <CustomBuildStep>
       <Command>

@@ -19,9 +19,9 @@
 #define PWR_M	0x3E
 #define GYRO_ADDRESS 0x68
 
-float bias_x = 0;
-float bias_y = 0; 
-float bias_z = 0;
+static float bias_x = 0;
+static float bias_y = 0; 
+static float bias_z = 0;
 
 void itg3200_init(void)
 {
@@ -47,23 +47,18 @@ void itg3200_init(void)
 
   Serial.print("ITG3200 calibration...");
   delay(50);
-  float ax=0, ay=0, az=0;
-  for (int i=0; i<30; i++) {
-    float x,y,z;
-    itg3200_getfb(x,y,z);
-    delay(50);
-  }
-  for (int i=0; i<100; i++) {
-    float x,y,z;
+  float ax=0, ay=0, az=0, x,y,z;
+  for (int i=0; i<30; i++) { itg3200_getfb(x,y,z); delay(50); }
+  for (int i=0; i<200; i++) {
     itg3200_getfb(x,y,z);
     ax += x;
     ay += y;
     az += z;
-    delay(50);
+    delay(10);
   }
-  bias_x = ax / 100.0f;
-  bias_y = ay / 100.0f;
-  bias_z = az / 100.0f;
+  bias_x = ax / 200.0f;
+  bias_y = ay / 200.0f;
+  bias_z = az / 200.0f;
   delay(50);
   Serial.println("OK");
   Serial.println(bias_x, DEC);
