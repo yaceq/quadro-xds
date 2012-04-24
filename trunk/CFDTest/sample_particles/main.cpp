@@ -105,10 +105,10 @@ void display()
 		glBindBuffer(GL_ARRAY_BUFFER, solver->get_vbo());
 
 			glEnableClientState(GL_VERTEX_ARRAY);
-			glVertexPointer(3, GL_FLOAT, sizeof(float3), NULL);
+			glVertexPointer(3, GL_FLOAT, sizeof(FVertex), NULL);
 
-			//glEnableClientState(GL_COLOR_ARRAY);
-			//glColorPointer(4, GL_FLOAT, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
+			glEnableClientState(GL_COLOR_ARRAY);
+			glColorPointer(4, GL_FLOAT, sizeof(Vertex), (void*)(offsetof(FVertex, color)));
 
 			glDrawArrays(GL_POINTS, 0,  solver->get_prt_num());
 

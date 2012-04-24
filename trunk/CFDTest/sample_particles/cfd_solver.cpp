@@ -27,14 +27,19 @@ cfd_solver::cfd_solver( float xsz, float ysz, float zsz )
 	nz			=	32;
 
 	uint total_grid_size	=	nx * ny * nz;
-	uint vbo_size			=	sizeof(float3) * m_particle_num;
+	uint vbo_size			=	sizeof(FVertex) * m_particle_num;
 
 	//	create vbo for particles :
 	m_position.resize( m_particle_num );
 	for (uint i=0; i<m_position.size(); i++) {
-		m_position[i].x = randf_signed() * xsz/2;
-		m_position[i].y = randf_signed() * ysz/2;
-		m_position[i].z = randf_signed() * zsz/2;
+		m_position[i].pos.x = randf_signed() * xsz/2;
+		m_position[i].pos.y = randf_signed() * ysz/2;
+		m_position[i].pos.z = randf_signed() * zsz/2;
+		m_position[i].pos.w = 1;
+		m_position[i].color.x = 1;
+		m_position[i].color.y = 1;
+		m_position[i].color.z = 1;
+		m_position[i].color.w = 1;
 	}
 
     glGenBuffers(1, &m_vbo);
@@ -53,22 +58,26 @@ cfd_solver::cfd_solver( float xsz, float ysz, float zsz )
 	zero_array.resize( nx*ny*nz, 0 );
 	//for (int i=0; i<zero_array.size(); i++) { zero_array[i] = randf_signed(); }
 	
+	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_divergence_array, &volume_chan_desc, volume_extent ) );
 	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_velocity_x_array, &volume_chan_desc, volume_extent ) );
 	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_velocity_y_array, &volume_chan_desc, volume_extent ) );
 	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_velocity_z_array, &volume_chan_desc, volume_extent ) );
 	CUDA_SAFE_CALL( cudaMalloc3DArray( &d_pressure_array,   &volume_chan_desc, volume_extent ) );
 
+	CUDA_SAFE_CALL( cudaMalloc( &d_divergence, volume_size ) );
 	CUDA_SAFE_CALL( cudaMalloc( &d_velocity_x, volume_size ) );
 	CUDA_SAFE_CALL( cudaMalloc( &d_velocity_y, volume_size ) );
 	CUDA_SAFE_CALL( cudaMalloc( &d_velocity_z, volume_size ) );
 	CUDA_SAFE_CALL( cudaMalloc( &d_pressure,   volume_size ) );
 
+	CUDA_SAFE_CALL( cudaMemcpy( d_divergence, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
 	CUDA_SAFE_CALL( cudaMemcpy( d_velocity_x, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
 	CUDA_SAFE_CALL( cudaMemcpy( d_velocity_y, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
 	CUDA_SAFE_CALL( cudaMemcpy( d_velocity_z, &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
 	CUDA_SAFE_CALL( cudaMemcpy( d_pressure,   &zero_array[0], volume_size, cudaMemcpyHostToDevice ) );
 
 	//	fill array with zero :
+	copy_back( d_divergence_array, d_divergence );
 	copy_back( d_velocity_x_array, d_velocity_x );
 	copy_back( d_velocity_y_array, d_velocity_y );
 	copy_back( d_velocity_z_array, d_velocity_z );
