@@ -10,6 +10,10 @@ texture<float, 3, cudaReadModeElementType> tex_velocity_x;
 texture<float, 3, cudaReadModeElementType> tex_velocity_y;
 texture<float, 3, cudaReadModeElementType> tex_velocity_z;
 texture<float, 3, cudaReadModeElementType> tex_pressure;
+texture<float, 3, cudaReadModeElementType> tex_divergence;
+int *d_boundry;
+
+
 
 
 void __device__ write_array_3d_float3 ( cudaPitchedPtr ptr, int x, int y, int z, float3 value, int nx, int ny, int nz )
@@ -49,7 +53,7 @@ float3 __device__ read_array_3d_float3 ( cudaPitchedPtr ptr, int x, int y, int z
 	Kernels :
 -----------------------------------------------------------------------------*/
 
-__global__ void update_particles ( int particle_num, float3 *pos, float dt, int nx, int ny, int nz )
+__global__ void update_particles ( int particle_num, FVertex *prt, float dt, int nx, int ny, int nz )
 {
     const int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if (tid >= particle_num) {
@@ -57,16 +61,21 @@ __global__ void update_particles ( int particle_num, float3 *pos, float dt, int 
 	}
 	//pos[tid].z = pos[tid].z - dt;
 
-	float3 uvw = pos[tid] / make_float3(nx,ny,nz) + make_float3(0.5f, 0.5f, 0.5f);
-	pos[tid].x = pos[tid].x + tex3D( tex_velocity_x, uvw.x, uvw.y, uvw.z );
-	pos[tid].y = pos[tid].y + tex3D( tex_velocity_y, uvw.x, uvw.y, uvw.z );
-	pos[tid].z = pos[tid].z + tex3D( tex_velocity_z, uvw.x, uvw.y, uvw.z );
-	if ( pos[tid].x >  nx/2 ) pos[tid].x = -nx/2; 
-	if ( pos[tid].x < -nx/2 ) pos[tid].x =  nx/2; 
-	if ( pos[tid].y >  nx/2 ) pos[tid].y = -ny/2; 
-	if ( pos[tid].y < -nx/2 ) pos[tid].y =  ny/2; 
-	if ( pos[tid].z >  nx/2 ) pos[tid].z = -nz/2; 
-	if ( pos[tid].z < -nx/2 ) pos[tid].z =  nz/2; 
+	float3 pos = make_float3( prt[tid].pos.x, prt[tid].pos.y, prt[tid].pos.z );
+	float3 uvw = pos / make_float3(nx,ny,nz) + make_float3(0.5f, 0.5f, 0.5f);
+	prt[tid].pos.x = prt[tid].pos.x + tex3D( tex_velocity_x, uvw.x, uvw.y, uvw.z );
+	prt[tid].pos.y = prt[tid].pos.y + tex3D( tex_velocity_y, uvw.x, uvw.y, uvw.z );
+	prt[tid].pos.z = prt[tid].pos.z + tex3D( tex_velocity_z, uvw.x, uvw.y, uvw.z );
+	/*if ( pos[tid].x >  nx/2 ) pos[tid].x -= nx; 
+	if ( pos[tid].x < -nx/2 ) pos[tid].x += nx; 
+	if ( pos[tid].y >  nx/2 ) pos[tid].y -= ny; 
+	if ( pos[tid].y < -nx/2 ) pos[tid].y += ny; 
+	if ( pos[tid].z >  nx/2 ) pos[tid].z -= nz; 
+	if ( pos[tid].z < -nx/2 ) pos[tid].z += nz; */
+	prt[tid].color.x = 0.1;
+	prt[tid].color.y = 0.1;
+	prt[tid].color.z = 0.2;
+	prt[tid].color.w = 0;
 }
 
 
@@ -79,19 +88,155 @@ __global__ void advect( float *velx, float *vely, float *velz, float dt, int nx,
 	int const z = blockIdx.z * blockDim.z + threadIdx.z;
 	int const i = x + y*nx + z*nx*ny;
 
-	float tx = ((float)x + 0.5f) / (float)nx;
-	float ty = ((float)y + 0.5f) / (float)ny;
-	float tz = ((float)z + 0.5f) / (float)nz;
+	float u = ((float)x + 0.5f) / (float)nx;
+	float v = ((float)y + 0.5f) / (float)ny;
+	float w = ((float)z + 0.5f) / (float)nz;
 
-	float vx = tex3D( tex_velocity_x, tx, ty, tz );
-	float vy = tex3D( tex_velocity_y, tx, ty, tz );
-	float vz = tex3D( tex_velocity_z, tx, ty, tz );
+	float vx = tex3D( tex_velocity_x, u, v, w );
+	float vy = tex3D( tex_velocity_y, u, v, w );
+	float vz = tex3D( tex_velocity_z, u, v, w );
 
-	velx[i]  = tex3D( tex_velocity_x,  tx - vx * dx * dt,  ty - vy * dy * dt,  tz - vz * dz * dt );
-	vely[i]  = tex3D( tex_velocity_y,  tx - vx * dx * dt,  ty - vy * dy * dt,  tz - vz * dz * dt );
-	velz[i]  = tex3D( tex_velocity_z,  tx - vx * dx * dt,  ty - vy * dy * dt,  tz - vz * dz * dt );
+	velx[i]  = tex3D( tex_velocity_x,  u - vx * dt,  v - vy * dt,  w - vz * dt );
+	vely[i]  = tex3D( tex_velocity_y,  u - vx * dt,  v - vy * dt,  w - vz * dt );
+	velz[i]  = tex3D( tex_velocity_z,  u - vx * dt,  v - vy * dt,  w - vz * dt );
 }
 
+
+//#define ADDR(x,y,z) ((x) + (y)*nx + (z)*nx*ny)
+
+__global__ void jacobi ( float *velx, float *vely, float *velz, int nx, int ny, int nz, float alpha, float beta )
+{
+	int const x = blockIdx.x * blockDim.x + threadIdx.x;
+	int const y = blockIdx.y * blockDim.y + threadIdx.y;
+	int const z = blockIdx.z * blockDim.z + threadIdx.z;
+	int const i = x + y*nx + z*nx*ny;
+
+	float du = 1.0 / (float)nx;
+	float dv = 1.0 / (float)ny;
+	float dw = 1.0 / (float)nz;
+	float u = ((float)x + 0.5f) / (float)nx;
+	float v = ((float)y + 0.5f) / (float)ny;
+	float w = ((float)z + 0.5f) / (float)nz;
+
+	
+	velx[i]	=	tex3D( tex_velocity_x, u+du, v, w )
+			+	tex3D( tex_velocity_x, u-du, v, w )
+			+	tex3D( tex_velocity_x, u, v+dv, w )
+			+	tex3D( tex_velocity_x, u, v-dv, w )
+			+	tex3D( tex_velocity_x, u, v, w+dw )
+			+	tex3D( tex_velocity_x, u, v, w-dw )
+			+	tex3D( tex_velocity_x, u, v, w ) *	alpha;
+
+	vely[i]	=	tex3D( tex_velocity_y, u+du, v, w )
+			+	tex3D( tex_velocity_y, u-du, v, w )
+			+	tex3D( tex_velocity_y, u, v+dv, w )
+			+	tex3D( tex_velocity_y, u, v-dv, w )
+			+	tex3D( tex_velocity_y, u, v, w+dw )
+			+	tex3D( tex_velocity_y, u, v, w-dw )
+			+	tex3D( tex_velocity_y, u, v, w ) *	alpha;
+
+	velz[i]	=	tex3D( tex_velocity_z, u+du, v, w )
+			+	tex3D( tex_velocity_z, u-du, v, w )
+			+	tex3D( tex_velocity_z, u, v+dv, w )
+			+	tex3D( tex_velocity_z, u, v-dv, w )
+			+	tex3D( tex_velocity_z, u, v, w+dw )
+			+	tex3D( tex_velocity_z, u, v, w-dw )
+			+	tex3D( tex_velocity_z, u, v, w ) *	alpha;
+
+	velx[i] /= beta;
+	vely[i] /= beta;
+	velz[i] /= beta;
+}
+
+
+__global__ void jacobi2 ( float *pressure, int nx, int ny, int nz, float alpha, float beta )
+{
+	int const x = blockIdx.x * blockDim.x + threadIdx.x;
+	int const y = blockIdx.y * blockDim.y + threadIdx.y;
+	int const z = blockIdx.z * blockDim.z + threadIdx.z;
+	int const i = x + y*nx + z*nx*ny;
+
+	float du = 1.0 / (float)nx;
+	float dv = 1.0 / (float)ny;
+	float dw = 1.0 / (float)nz;
+	float u = ((float)x + 0.5f) / (float)nx;
+	float v = ((float)y + 0.5f) / (float)ny;
+	float w = ((float)z + 0.5f) / (float)nz;
+
+	pressure[i]	=	tex3D( tex_pressure,   u+du, v, w )
+				+	tex3D( tex_pressure,   u-du, v, w )
+				+	tex3D( tex_pressure,   u, v+dv, w )
+				+	tex3D( tex_pressure,   u, v-dv, w )
+				+	tex3D( tex_pressure,   u, v, w+dw )
+				+	tex3D( tex_pressure,   u, v, w-dw )
+				+	tex3D( tex_divergence, u, v, w ) *	alpha;
+
+	pressure[i] /= beta;
+}
+
+
+
+__global__ void divergence ( float *div, int nx, int ny, int nz, float dx, float dy, float dz )
+{
+	int const x = blockIdx.x * blockDim.x + threadIdx.x;
+	int const y = blockIdx.y * blockDim.y + threadIdx.y;
+	int const z = blockIdx.z * blockDim.z + threadIdx.z;
+	int const i = x + y*nx + z*nx*ny;
+
+	float du = 1.0 / (float)nx;
+	float dv = 1.0 / (float)ny;
+	float dw = 1.0 / (float)nz;
+	float u = ((float)x + 0.5f) / (float)nx;
+	float v = ((float)y + 0.5f) / (float)ny;
+	float w = ((float)z + 0.5f) / (float)nz;
+
+	div[i]	=	( tex3D( tex_velocity_x, u+du, v, w ) -	tex3D( tex_velocity_x, u-du, v, w ) ) / 2.0f / dx
+			+	( tex3D( tex_velocity_y, u, v+dv, w ) -	tex3D( tex_velocity_y, u, v-dv, w ) ) / 2.0f / dy
+			+	( tex3D( tex_velocity_z, u, v, w+dw ) -	tex3D( tex_velocity_z, u, v, w-dw ) ) / 2.0f / dz;
+}
+
+
+
+__global__ void boundry ( float *velx, float *vely, float *velz, float *pressure, int *bounds, int nx, int ny, int nz )
+{
+	int const x = blockIdx.x * blockDim.x + threadIdx.x;
+	int const y = blockIdx.y * blockDim.y + threadIdx.y;
+	int const z = blockIdx.z * blockDim.z + threadIdx.z;
+	int const i = x + y*nx + z*nx*ny;
+	int remap = bounds[i];
+		
+	if (remap>=0) {
+		velx[i]		= -velx		[ remap ];
+		vely[i]		= -vely		[ remap ];
+		velz[i]		= -velz		[ remap ];
+		pressure[i]	= pressure	[ remap ];
+	}
+}
+
+
+
+__global__ void gradient ( float *velx, float *vely, float *velz, int nx, int ny, int nz, float dx, float dy, float dz )
+{
+	int const x = blockIdx.x * blockDim.x + threadIdx.x;
+	int const y = blockIdx.y * blockDim.y + threadIdx.y;
+	int const z = blockIdx.z * blockDim.z + threadIdx.z;
+	int const i = x + y*nx + z*nx*ny;
+
+	float du = 1.0 / (float)nx;
+	float dv = 1.0 / (float)ny;
+	float dw = 1.0 / (float)nz;
+	float u = ((float)x + 0.5f) / (float)nx;
+	float v = ((float)y + 0.5f) / (float)ny;
+	float w = ((float)z + 0.5f) / (float)nz;
+
+	float grad_x = ( tex3D( tex_pressure, u+du, v, w ) -	tex3D( tex_pressure, u-du, v, w ) ) / 2.0f / dx;
+	float grad_y = ( tex3D( tex_pressure, u, v+dv, w ) -	tex3D( tex_pressure, u, v-dv, w ) ) / 2.0f / dy;
+	float grad_z = ( tex3D( tex_pressure, u, v, w+dw ) -	tex3D( tex_pressure, u, v, w-dw ) ) / 2.0f / dz;
+
+	velx[i] -= grad_x;
+	vely[i] -= grad_y;
+	velz[i] -= grad_z;
+}
 
 
 
@@ -106,9 +251,9 @@ __global__ void propeller ( float *velx, float *vely, float *velz, int nx, int n
 	float3 v = make_float3(0,0,0);
 
 	if ( x >= 12 && x < 20 )
-	if ( y >= 12 && y < 20 )
+	if ( y >= 22 && y < 28 )
 	if ( z >= 12 && z < 20 )
-		v = make_float3(0,1,0);
+		v = make_float3(0.3,1,0.2);
 
 	velx[i] += v.x;
 	vely[i] += v.y;
@@ -123,9 +268,9 @@ void bind_array_to_texture ( cudaArray *array, texture<float, 3, cudaReadModeEle
 {
     tex.normalized		=	 true;                  // access with normalized texture coordinates
     tex.filterMode		=	 cudaFilterModeLinear;  // linear interpolation
-    tex.addressMode[0]	=	 cudaAddressModeWrap;   // wrap texture coordinates
-    tex.addressMode[1]	=	 cudaAddressModeWrap;
-    tex.addressMode[2]	=	 cudaAddressModeWrap;
+    tex.addressMode[0]	=	 cudaAddressModeClamp;   // wrap texture coordinates
+    tex.addressMode[1]	=	 cudaAddressModeClamp;
+    tex.addressMode[2]	=	 cudaAddressModeClamp;
 
     CUDA_SAFE_CALL( cudaBindTextureToArray( tex, array, desc ) );
 }
@@ -134,10 +279,31 @@ void bind_array_to_texture ( cudaArray *array, texture<float, 3, cudaReadModeEle
 
 void cfd_solver::init_gpu()
 {
+	bind_array_to_texture( d_divergence_array, tex_divergence, volume_chan_desc );
 	bind_array_to_texture( d_velocity_x_array, tex_velocity_x, volume_chan_desc );
 	bind_array_to_texture( d_velocity_y_array, tex_velocity_y, volume_chan_desc );
 	bind_array_to_texture( d_velocity_z_array, tex_velocity_z, volume_chan_desc );
 	bind_array_to_texture( d_pressure_array,   tex_pressure,   volume_chan_desc );
+
+	int sz = nx*ny*nz * sizeof(int);
+	std::vector<int> h_boundry(sz);
+	CUDA_SAFE_CALL( cudaMalloc( &d_boundry, sz ) );
+
+	#define ADDR(i,j,k) (i) + (j) * nx + (k) * nx * ny
+
+	for (int i=0; i<nx; i++)
+	for (int j=0; j<ny; j++)
+	for (int k=0; k<nz; k++)
+	{											   
+		h_boundry[ ADDR(i,j,k) ] = -1;
+		if (i==0)    {	h_boundry[ ADDR(i,j,k) ] = ADDR(i+1,j,k);	};
+		if (i==nx-1) {	h_boundry[ ADDR(i,j,k) ] = ADDR(i-1,j,k);	};
+		if (j==0)    {	h_boundry[ ADDR(i,j,k) ] = ADDR(i,j+1,k);	};
+		if (j==ny-1) {	h_boundry[ ADDR(i,j,k) ] = ADDR(i,j-1,k);	};
+		if (k==0)    {	h_boundry[ ADDR(i,j,k) ] = ADDR(i,j,k+1);	};
+		if (k==nz-1) {	h_boundry[ ADDR(i,j,k) ] = ADDR(i,j,k-1);	};
+	}
+	CUDA_SAFE_CALL( cudaMemcpy( d_boundry, &h_boundry[0], sz, cudaMemcpyHostToDevice ) );
 }
 
 
@@ -155,28 +321,96 @@ void cfd_solver::launch_gpu( float dt )
 	dim3 grid_size_3d  ( iDivUp( nx, block_size_3d.x ), iDivUp( ny, block_size_3d.y ), iDivUp( nz, block_size_3d.z ) );
 
 
+	/*---------------------------------------------------------------
+	*	advection :
+	---------------------------------------------------------------*/
+
 	//	make propeller turbulence :
-	advect<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, dt/8, nx, ny, nz, dx, dy, dz );
-	advect<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, dt/8, nx, ny, nz, dx, dy, dz );
-	advect<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, dt/8, nx, ny, nz, dx, dy, dz );
+	advect<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, dt, nx, ny, nz, dx, dy, dz );
+
+	copy_back( d_velocity_x_array, d_velocity_x );
+	copy_back( d_velocity_y_array, d_velocity_y );
+	copy_back( d_velocity_z_array, d_velocity_z );
+
+	int N = 30;
+	float visc  = 10.1f;
+	float alpha = dx*dx / visc / dt;
+	float beta  = 6 + alpha;
+
+	
+	/*---------------------------------------------------------------
+	*	poisson viscosity :
+	---------------------------------------------------------------*/
+
+	for (int i=0; i<N; i++) {
+		jacobi<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz, alpha, beta );
+
+		boundry<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, d_pressure, d_boundry, nx, ny, nz );
+
+		copy_back( d_velocity_x_array, d_velocity_x );
+		copy_back( d_velocity_y_array, d_velocity_y );
+		copy_back( d_velocity_z_array, d_velocity_z );
+
+	} //*/
+
+
+	/*---------------------------------------------------------------
+	*	external forces :
+	---------------------------------------------------------------*/
 
 	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz );
 
-	cudaError err = cudaGetLastError();
-    if( cudaSuccess != err) {                                           
-        fprintf(stderr, "Cuda error in file '%s' in line %i : %s.\n", __FILE__, __LINE__, cudaGetErrorString( err) );         
-    } 
+
+	/*---------------------------------------------------------------
+	*	poisson pressure :
+	---------------------------------------------------------------*/
+
+	divergence<<<grid_size_3d, block_size_3d>>> ( d_divergence, nx, ny, nz, dx, dy, dz );
+
+	copy_back( d_divergence_array, d_divergence );
+
+	alpha = -dx*dx;
+	beta  = 6;
+
+	for (int i=0; i<N; i++) {
+
+		jacobi2<<<grid_size_3d, block_size_3d>>>( d_pressure, nx, ny, nz, alpha, beta );
+
+		boundry<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, d_pressure, d_boundry, nx, ny, nz );
+
+		copy_back( d_pressure_array, d_pressure );
+	} //*/							   
+
+
+	/*---------------------------------------------------------------
+	*	gradient :
+	---------------------------------------------------------------*/
+
+	gradient<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz, dx, dy, dz );
+
+	boundry<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, d_pressure, d_boundry, nx, ny, nz );
 
 	copy_back( d_velocity_x_array, d_velocity_x );
 	copy_back( d_velocity_y_array, d_velocity_y );
 	copy_back( d_velocity_z_array, d_velocity_z );
 
 
-	//	update particles :
+	/*---------------------------------------------------------------
+	*	Stufff...
+	---------------------------------------------------------------*/
+	cudaError err = cudaGetLastError();
+    if( cudaSuccess != err) {                                           
+        fprintf(stderr, "Cuda error in file '%s' in line %i : %s.\n", __FILE__, __LINE__, cudaGetErrorString( err) );         
+    } 
+
+
+	/*---------------------------------------------------------------
+	*	update particles
+	---------------------------------------------------------------*/
 
 	CUDA_SAFE_CALL( cudaGraphicsMapResources(1, &m_vbo_cuda) );
 
-	float3 * d_vbo = NULL;
+	FVertex * d_vbo = NULL;
 	size_t vbo_size = 0;
 	CUDA_SAFE_CALL( cudaGraphicsResourceGetMappedPointer( (void**)&d_vbo, &vbo_size, m_vbo_cuda) );
 

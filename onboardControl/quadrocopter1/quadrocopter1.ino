@@ -67,12 +67,12 @@ void stabilize(float dt)
   abs_pitch += b*dt;
   abs_yaw   += c*dt;
   
-  Serial.print(x, DEC);  Serial.print(" ");
+/*  Serial.print(x, DEC);  Serial.print(" ");
   Serial.print(y, DEC);  Serial.print(" ");
   Serial.print(z, DEC);  Serial.print(" ");
   Serial.print(abs_roll,  DEC);  Serial.print(" ");
   Serial.print(abs_pitch, DEC);  Serial.print(" ");
-  Serial.print(abs_yaw,   DEC);  Serial.print(" ");
+  Serial.print(abs_yaw,   DEC);  Serial.print(" ");*/
   Serial.println("");//*/
   
 /*  if (abs(x)<1) { x = 0; }
