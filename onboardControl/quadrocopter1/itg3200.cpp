@@ -19,6 +19,91 @@
 #define PWR_M	0x3E
 #define GYRO_ADDRESS 0x68
 
+float itg3200::bias_x = 0;
+float itg3200::bias_y = 0;
+float itg3200::bias_z = 0;
+
+void itg3200::init()
+{
+  delay(50);
+  Serial.print("itg3200 gyro initialization...");
+  Wire.beginTransmission(GYRO_ADDRESS);
+  Wire.write(0x3E);
+  Wire.write(0x80);  //send a reset to the device
+  Wire.endTransmission(); //end transmission
+  delay(50);
+
+  Wire.beginTransmission(GYRO_ADDRESS);
+  Wire.write((uint8_t)0x15);
+  Wire.write((uint8_t)0x00);   //sample rate divider
+  Wire.endTransmission(); //end transmission
+  delay(50);
+
+  Wire.beginTransmission(GYRO_ADDRESS);
+  Wire.write((int)0x16);
+  Wire.write((int)0x18); // ±2000 degrees/s (default value)
+  Wire.endTransmission(); //end transmission
+  delay(50);
+  Serial.println("done.");
+}
+
+
+void itg3200::calibrate( int count, int dt )
+{
+  Serial.print("itg3200 calibration...");
+  bias_x = bias_y = bias_z = 0;
+  float ax=0, ay=0, az=0, x,y,z;
+  for (int i=0; i<count/4; i++) { get_data(x,y,z); delay(dt); }
+  for (int i=0; i<count; i++) {
+    if ((i&7)==0) Serial.print(".");
+    get_data(x,y,z);
+    ax += x;
+    ay += y;
+    az += z;
+    delay(dt);
+  }
+  bias_x = ax/count;
+  bias_y = ay/count;
+  bias_z = az/count;
+  Serial.println("done.");
+  Serial.print("...bias x : "); Serial.println(bias_x, 8);
+  Serial.print("...bias y : "); Serial.println(bias_y, 8);
+  Serial.print("...bias z : "); Serial.println(bias_z, 8);
+}
+
+
+
+void itg3200::get_raw_data ( int &x, int &y, int &z )
+{
+  x = y = z = 0;
+  Wire.beginTransmission(GYRO_ADDRESS);
+  Wire.write(0x1D);
+  Wire.endTransmission();
+  Wire.requestFrom(GYRO_ADDRESS, 6); 
+  
+  x =  Wire.read() << 8;
+  x |= Wire.read();
+  
+  y =  Wire.read() << 8;
+  y |= Wire.read();
+  
+  z =  Wire.read() << 8;
+  z |= Wire.read();
+}
+
+
+void itg3200::get_data ( float &x, float &y, float &z )
+{
+  int ix, iy, iz;
+  get_raw_data(ix, iy, iz);
+  x = ix / 14.375 - bias_x;
+  y = iy / 14.375 - bias_y;
+  z = iz / 14.375 - bias_z;
+}
+
+
+
+/*
 static float bias_x = 0;
 static float bias_y = 0; 
 static float bias_z = 0;
@@ -104,4 +189,4 @@ void itg3200_get( int &x, int &y, int &z )
   z |= Wire.read();
 }
 
-
+*/
