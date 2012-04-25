@@ -19,7 +19,7 @@ namespace ConsoleControl {
 			
 			do {
 				try {
-					port = new SerialPort( "COM6", 9600, Parity.None, 8, StopBits.One );
+					port = new SerialPort( "COM7", 9600, Parity.None, 8, StopBits.One );
 					port.NewLine = "\r\n";
 					port.Open();
 

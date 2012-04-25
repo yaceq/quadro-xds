@@ -14,7 +14,84 @@
 #define MMA7660_SR    0x08
 #define MMA7660_PDET  0x09
 #define MMA7660_PD    0x0A
+
+float mma7660::bias_x = 0;
+float mma7660::bias_y = 0;
+float mma7660::bias_z = 0;
  
+ 
+void mma7660::init()
+{
+  Serial.print("mma7660 initialization...");
+  i2csend(MMA7660_MODE, (byte)0x00);
+  i2csend(MMA7660_SR,   (byte)0x00);
+  i2csend(MMA7660_MODE, (byte)0x01);
+  Serial.println("done.");
+}
+ 
+
+void mma7660::i2csend(byte addr, byte value)
+{
+  Wire.beginTransmission(MMA7660addr);
+  Wire.write(addr);   
+  Wire.write(value);
+  Wire.endTransmission();
+}
+
+
+void mma7660::calibrate( int count, int dt )
+{
+  Serial.print("mma7660 calibration...");
+  bias_x = bias_y = bias_z = 0;
+  float ax=0, ay=0, az=0, x,y,z;
+  for (int i=0; i<count/4; i++) { get_data(x,y,z); delay(dt); }
+  for (int i=0; i<count; i++) {
+    if ((i&7)==0) Serial.print(".");
+    get_data(x,y,z);
+    ax += x;
+    ay += y;
+    az += z;
+    delay(dt);
+  }
+  bias_x = ax/count;
+  bias_y = ay/count;
+  bias_z = az/count;
+  Serial.println("done.");
+  Serial.print("...bias x : "); Serial.println(bias_x, 8);
+  Serial.print("...bias y : "); Serial.println(bias_y, 8);
+  Serial.print("...bias z : "); Serial.println(bias_z, 8);
+}
+
+
+
+void mma7660::get_raw_data( char &x, char &y, char &z )
+{
+  Wire.beginTransmission(MMA7660addr);
+  Wire.write(uint8_t(0x00));  // register to read
+  Wire.endTransmission();
+  Wire.requestFrom(MMA7660addr, 3);    // request 3 bytes from slave device 0x4c
+ 
+  if (Wire.available()) {
+    x = Wire.read();
+    y = Wire.read();
+    z = Wire.read();
+    x = ((char)((x)<<2))/4;
+    y = ((char)((y)<<2))/4;
+    z = ((char)((z)<<2))/4;
+  }
+}
+
+
+void mma7660::get_data( float &x, float &y, float &z )
+{
+  const float kG = 1.5f*9.8f/32;
+  char ix, iy, iz ;
+  get_raw_data(ix, iy, iz); 
+  x = ix * kG - bias_x;
+  y = iy * kG - bias_y;
+  z = iz * kG;  // no bias!
+}
+
 
 int count = 0;
 int bufx[8], last_x;
@@ -65,14 +142,13 @@ void mma7660_init(void)
 void mma7660_getf(float &x, float &y, float &z)
 {
   mma7660_update();
-  /*x = y = z = 0;
+  x = y = z = 0;
   for (int i=0; i<8; i++) {
     x += bufx[i];
     y += bufy[i];
     z += bufz[i];
   }
   x /= 8;      y /= 8;      z /= 8;
-  //*/
   x = last_x;  y = last_y;  z = last_z;
   x -= bias_x;
   y -= bias_y;
