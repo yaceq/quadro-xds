@@ -33,7 +33,8 @@ cfd_solver::cfd_solver( float xsz, float ysz, float zsz )
 	m_position.resize( m_particle_num );
 	for (uint i=0; i<m_position.size(); i++) {
 		m_position[i].pos.x = randf_signed() * xsz/2;
-		m_position[i].pos.y = randf_signed() * ysz/2;
+		//m_position[i].pos.y = randf_signed() * ysz/2;
+		m_position[i].pos.y = randf_signed() - ysz/2 + 2;
 		m_position[i].pos.z = randf_signed() * zsz/2;
 		m_position[i].pos.w = 1;
 		m_position[i].color.x = 1;
