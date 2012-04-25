@@ -66,12 +66,12 @@ __global__ void update_particles ( int particle_num, FVertex *prt, float dt, int
 	prt[tid].pos.x = prt[tid].pos.x + tex3D( tex_velocity_x, uvw.x, uvw.y, uvw.z );
 	prt[tid].pos.y = prt[tid].pos.y + tex3D( tex_velocity_y, uvw.x, uvw.y, uvw.z );
 	prt[tid].pos.z = prt[tid].pos.z + tex3D( tex_velocity_z, uvw.x, uvw.y, uvw.z );
-	/*if ( pos[tid].x >  nx/2 ) pos[tid].x -= nx; 
-	if ( pos[tid].x < -nx/2 ) pos[tid].x += nx; 
-	if ( pos[tid].y >  nx/2 ) pos[tid].y -= ny; 
-	if ( pos[tid].y < -nx/2 ) pos[tid].y += ny; 
-	if ( pos[tid].z >  nx/2 ) pos[tid].z -= nz; 
-	if ( pos[tid].z < -nx/2 ) pos[tid].z += nz; */
+	if ( prt[tid].pos.x >  nx/2 ) prt[tid].pos.x -= nx; 
+	if ( prt[tid].pos.x < -nx/2 ) prt[tid].pos.x += nx; 
+	if ( prt[tid].pos.y >  nx/2 ) prt[tid].pos.y -= ny; 
+	if ( prt[tid].pos.y < -nx/2 ) prt[tid].pos.y += ny; 
+	if ( prt[tid].pos.z >  nx/2 ) prt[tid].pos.z -= nz; 
+	if ( prt[tid].pos.z < -nx/2 ) prt[tid].pos.z += nz; 
 	prt[tid].color.x = 0.1;
 	prt[tid].color.y = 0.1;
 	prt[tid].color.z = 0.2;
@@ -240,7 +240,7 @@ __global__ void gradient ( float *velx, float *vely, float *velz, int nx, int ny
 
 
 
-__global__ void propeller ( float *velx, float *vely, float *velz, int nx, int ny, int nz )
+__global__ void propeller ( float *velx, float *vely, float *velz, int nx, int ny, int nz, float sx, float sy, float sz )
 {
 	//	cmpute voxel indices
 	int const x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -250,10 +250,10 @@ __global__ void propeller ( float *velx, float *vely, float *velz, int nx, int n
   
 	float3 v = make_float3(0,0,0);
 
-	if ( x >= 12 && x < 20 )
-	if ( y >= 22 && y < 28 )
-	if ( z >= 12 && z < 20 )
-		v = make_float3(0.3,1,0.2);
+	if ( x >= 14 && x < 18 )
+	if ( y >= 14 && y < 18 )
+	if ( z >= 14 && z < 18 )
+		v = make_float3(sx,sy,sz);
 
 	velx[i] += v.x;
 	vely[i] += v.y;
@@ -307,9 +307,12 @@ void cfd_solver::init_gpu()
 }
 
 
+float t = 0;
 
 void cfd_solver::launch_gpu( float dt )
 {
+	t += dt;
+
 	float dx = size_x / nx;
 	float dy = size_y / ny;
 	float dz = size_z / nz;
@@ -332,8 +335,8 @@ void cfd_solver::launch_gpu( float dt )
 	copy_back( d_velocity_y_array, d_velocity_y );
 	copy_back( d_velocity_z_array, d_velocity_z );
 
-	int N = 30;
-	float visc  = 10.1f;
+	int N = 10;
+	float visc  = 0.1f;
 	float alpha = dx*dx / visc / dt;
 	float beta  = 6 + alpha;
 
@@ -358,7 +361,7 @@ void cfd_solver::launch_gpu( float dt )
 	*	external forces :
 	---------------------------------------------------------------*/
 
-	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz );
+	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz, 4*cos(1*t), 4*sin(0.2*t), 4*cos(0.3*t) );
 
 
 	/*---------------------------------------------------------------

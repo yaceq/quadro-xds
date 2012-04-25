@@ -116,7 +116,7 @@ void display()
 		glDisableClientState(GL_VERTEX_ARRAY);
 		glDisableClientState(GL_COLOR_ARRAY);
 
-		drawbox( 32,32,32 );
+		//drawbox( 32,32,32 );
 
 
         // print stats
