@@ -106,7 +106,7 @@ namespace Simulator {
 				this.Exit();
 			}
 
-			if (Keyboard.GetState().IsKeyDown( Keys.F2 )) {
+			if (Keyboard.GetState().IsKeyDown( Keys.F1 )) {
 				if ( controlPanel==null || controlPanel.IsDisposed ) {
 					controlPanel = new ControlPanel(this);
 					controlPanel.Show();
