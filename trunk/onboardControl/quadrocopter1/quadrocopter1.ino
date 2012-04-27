@@ -24,9 +24,9 @@ void setup()
   
 //  rcbt::init();
   itg3200::init();
-  itg3200::calibrate(100, 20);
+  itg3200::calibrate(100, 50);
   mma7660::init();
-  mma7660::calibrate(100, 20);
+  mma7660::calibrate(100, 50);
 }
 
 
@@ -40,15 +40,25 @@ float throttle = 0;
 
 void apply_control( float throttle, float roll, float pitch, float yaw, float factor )
 {
-  float throttle1 = constrain( throttle + factor * ( - roll - pitch + yaw ), 0, 1 );
-  float throttle2 = constrain( throttle + factor * ( - roll + pitch - yaw ), 0, 1 );
-  float throttle3 = constrain( throttle + factor * ( + roll + pitch + yaw ), 0, 1 );
-  float throttle4 = constrain( throttle + factor * ( + roll - pitch - yaw ), 0, 1 );
+  float throttle1 = constrain( throttle + throttle * factor * ( - roll - pitch + yaw ), 0, 1 );
+  float throttle2 = constrain( throttle + throttle * factor * ( - roll + pitch - yaw ), 0, 1 );
+  float throttle3 = constrain( throttle + throttle * factor * ( + roll + pitch + yaw ), 0, 1 );
+  float throttle4 = constrain( throttle + throttle * factor * ( + roll - pitch - yaw ), 0, 1 );
   
-  srv1.write( sqrt(throttle1) * 180 );
-  srv2.write( sqrt(throttle2) * 180 );
-  srv3.write( sqrt(throttle3) * 180 );
-  srv4.write( sqrt(throttle4) * 180 );
+  int pwm1 = (throttle1) * 170+10;
+  int pwm2 = (throttle2) * 170+10;
+  int pwm3 = (throttle3) * 170+10;
+  int pwm4 = (throttle4) * 170+10;
+  if (throttle<0.05) {
+    srv1.write( 10 );    srv2.write( 10 );
+    srv3.write( 10 );    srv4.write( 10 );
+  } else {
+    srv1.write( pwm1 );  srv2.write( pwm2 );
+    srv3.write( pwm3 );  srv4.write( pwm4 );
+  }
+  char str[64];
+  sprintf(str, "%x %x %x %x", pwm1, pwm1, pwm3, pwm4);
+  Serial.println( str );
 }
 
 
@@ -58,9 +68,9 @@ void loop()
   itg3200::get_data(a,b,c);
   mma7660::get_data(x,y,z);
   
-  int stb_roll  = ( -y/100 - a/100 );
-  int stb_pitch = (  x/100 - b/100 );
-  int stb_yaw   = c/100;
+  int stb_roll  = ( -y/2 - a/80 );
+  int stb_pitch = (  x/2 - b/80 );
+  int stb_yaw   = c/10;
   
   apply_control( throttle, roll + stb_roll, pitch + stb_pitch, yaw + stb_yaw, 0.1f );
   
@@ -78,6 +88,10 @@ void loop()
     int t=0,r=0,p=0,y=0;
     if (cmd[0]=='X') {
       sscanf(cmd, "X %x %x %x %x", &t, &r, &p, &y);
+      t = (t << 8) / 0xFF;
+      r = (r << 8) / 0xFF;
+      p = (p << 8) / 0xFF;
+      y = (y << 8) / 0xFF;
       throttle = t/127.0f;
       roll     = r/127.0f;
       pitch    = p/127.0f;
