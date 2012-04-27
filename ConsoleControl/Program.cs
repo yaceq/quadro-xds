@@ -85,6 +85,11 @@ namespace ConsoleControl {
 			Thread.Sleep(1000);
 
 
+			float trim_roll	= 0;
+			float trim_pitch	= 0;
+			float trim_yaw	= 0;
+
+
 			try {
 				while (true) {
 
@@ -94,21 +99,23 @@ namespace ConsoleControl {
 						break;
 					}
 
-					/*if (gps.DPad.Left  == ButtonState.Pressed) stab_r = (byte)MathHelper.Clamp( stab_r - 1, 1, 255 );
-					if (gps.DPad.Right == ButtonState.Pressed) stab_r = (byte)MathHelper.Clamp( stab_r + 1, 1, 255 );
-					if (gps.DPad.Down  == ButtonState.Pressed) stab_g = (byte)MathHelper.Clamp( stab_g - 1, 1, 255 );
-					if (gps.DPad.Up    == ButtonState.Pressed) stab_g = (byte)MathHelper.Clamp( stab_g + 1, 1, 255 );
-					if (gps.IsButtonDown(Buttons.X)) roll_bias--;
+					if (gps.DPad.Left  == ButtonState.Pressed)	 trim_roll	-= 0.3f;
+					if (gps.DPad.Right == ButtonState.Pressed)	 trim_roll	+= 0.3f;
+					if (gps.DPad.Down  == ButtonState.Pressed)	 trim_pitch	-= 0.3f;
+					if (gps.DPad.Up    == ButtonState.Pressed)	 trim_pitch	+= 0.3f;
+					if (gps.IsButtonDown(Buttons.LeftShoulder))  trim_yaw	+= 0.3f;
+					if (gps.IsButtonDown(Buttons.RightShoulder)) trim_yaw	-= 0.3f;
+					/*if (gps.IsButtonDown(Buttons.X)) roll_bias--;
 					if (gps.IsButtonDown(Buttons.B)) roll_bias++;
 					if (gps.IsButtonDown(Buttons.Y)) pitch_bias++;
 					if (gps.IsButtonDown(Buttons.A)) pitch_bias--;
 					if (gps.IsButtonDown(Buttons.LeftShoulder)) yaw_bias++;
 					if (gps.IsButtonDown(Buttons.RightShoulder)) yaw_bias--;*/
 
-					int throttle	=	(char)( 127 * Curve( gps.Triggers.Left,			0.5f ) ) & 0xFF;
-					int roll		=	(char)( 127 * Curve( gps.ThumbSticks.Right.X,	0.5f ) ) & 0xFF;
-					int pitch		=	(char)( 127 * Curve( gps.ThumbSticks.Right.Y,	0.5f ) ) & 0xFF;
-					int yaw			=	(char)( 127 * Curve( gps.ThumbSticks.Left.X,	0.5f ) ) & 0xFF;
+					int throttle	=	(int)MathHelper.Clamp( (127 * Curve( gps.Triggers.Left,		  1.0f )),		 	    -127, 127 ) & 0xFF;
+					int roll		=	(int)MathHelper.Clamp( (127 * Curve( gps.ThumbSticks.Right.X, 0.7f )) + trim_roll,  -127, 127 ) & 0xFF;
+					int pitch		=	(int)MathHelper.Clamp( (127 * Curve( gps.ThumbSticks.Right.Y, 0.7f )) + trim_pitch, -127, 127 ) & 0xFF;
+					int yaw			=	(int)MathHelper.Clamp( (127 * Curve( gps.ThumbSticks.Left.X,  0.7f )) + trim_yaw,   -127, 127 ) & 0xFF;
 
 					string outCmd		=	string.Format("X{0,3:X}{1,3:X}{2,3:X}{3,3:X}", throttle, roll, pitch, yaw );
 
