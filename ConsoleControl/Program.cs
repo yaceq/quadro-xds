@@ -11,53 +11,90 @@ using System.Globalization;
 
 namespace ConsoleControl {
 	class Program {
+
+		static float Curve( float value, float power ) 
+		{
+			float sign = Math.Sign(value);
+			value = Math.Abs( value );
+			value = (float)Math.Pow( value, power );
+			return sign * value;
+		}
+
+
+		static List<string> commandList = new List<string>();
+		static string incomingCommand = "";
+
+
+		static void PushInCommand  ( string s ) { commandList.Add( s ); }
+		static string PopInCommand ( ) {
+			if (commandList.Count==0) {
+				return null;
+			} else {
+				var s = commandList[0];
+				commandList.RemoveAt(0);
+				return s;
+			}
+		}
+
+
+		private static void DataReceviedHandler( object sender, SerialDataReceivedEventArgs e )
+		{
+			SerialPort sp = (SerialPort)sender;
+			string indata = sp.ReadExisting();
+
+			foreach (char ch in indata) {
+				if (ch=='\n') {
+					PushInCommand( incomingCommand );
+					incomingCommand = "";
+				} else {
+					incomingCommand += ch;
+				}
+			}
+		}
+
+
 		static void Main ( string[] args )
 		{
 			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 
 			SerialPort	port = null;
+			string portName  = "COM6";
+
+			Console.WriteLine("waiting for connection on " + portName);
 			
 			do {
+				
 				try {
-					port = new SerialPort( "COM7", 9600, Parity.None, 8, StopBits.One );
-					port.NewLine = "\r\n";
+
+					port = new SerialPort( portName, 57600, Parity.None, 8, StopBits.One );
 					port.Open();
+					port.DataReceived += new SerialDataReceivedEventHandler(DataReceviedHandler);
 
 					Console.WriteLine();
-					Console.WriteLine("Serial port is open!");
+					Console.WriteLine("serial port is open.");
 
 				} catch ( Exception ex ) {
 					Console.Write(".");
 					Thread.Sleep(250);
 					port = null;
 				}
+
 			} while (port==null);
 
 
-			while (true) {
-				var s = port.ReadLine();
-				Console.WriteLine(s);
+			Thread.Sleep(1000);
 
-				if (s=="DONE") {
-					break;
-				}
-			}
-
-			byte stab_r = 200;
-			byte stab_g = 200;
-
-			int roll_bias = 0;
-			int pitch_bias = 0;
-			int yaw_bias = 0;
 
 			try {
 				while (true) {
 
 					var gps = GamePad.GetState(0);
-					var bufo = new byte[8];
-					var bufi = new byte[8];
 
-					if (gps.DPad.Left  == ButtonState.Pressed) stab_r = (byte)MathHelper.Clamp( stab_r - 1, 1, 255 );
+					if ( gps.IsButtonDown(Buttons.Back) ) {
+						break;
+					}
+
+					/*if (gps.DPad.Left  == ButtonState.Pressed) stab_r = (byte)MathHelper.Clamp( stab_r - 1, 1, 255 );
 					if (gps.DPad.Right == ButtonState.Pressed) stab_r = (byte)MathHelper.Clamp( stab_r + 1, 1, 255 );
 					if (gps.DPad.Down  == ButtonState.Pressed) stab_g = (byte)MathHelper.Clamp( stab_g - 1, 1, 255 );
 					if (gps.DPad.Up    == ButtonState.Pressed) stab_g = (byte)MathHelper.Clamp( stab_g + 1, 1, 255 );
@@ -66,29 +103,30 @@ namespace ConsoleControl {
 					if (gps.IsButtonDown(Buttons.Y)) pitch_bias++;
 					if (gps.IsButtonDown(Buttons.A)) pitch_bias--;
 					if (gps.IsButtonDown(Buttons.LeftShoulder)) yaw_bias++;
-					if (gps.IsButtonDown(Buttons.RightShoulder)) yaw_bias--;
+					if (gps.IsButtonDown(Buttons.RightShoulder)) yaw_bias--;*/
 
-					bufo[0] = (byte)(              200 * gps.Triggers.Left );		//	throttle
-					bufo[1] = (byte)( roll_bias  + 200 * (gps.ThumbSticks.Right.X+1)/2 );		//	throttle
-					bufo[2] = (byte)( pitch_bias + 200 * (gps.ThumbSticks.Right.Y+1)/2 );		//	throttle
-					bufo[3] = (byte)( yaw_bias   + 200 * (gps.ThumbSticks.Left.X+1)/2 );		//	throttle
-					bufo[4] = (byte)( stab_r );
-					bufo[5] = (byte)( stab_g );
-					port.Write( bufo, 0, 6 );
+					int throttle	=	(char)( 127 * Curve( gps.Triggers.Left,			0.5f ) ) & 0xFF;
+					int roll		=	(char)( 127 * Curve( gps.ThumbSticks.Right.X,	0.5f ) ) & 0xFF;
+					int pitch		=	(char)( 127 * Curve( gps.ThumbSticks.Right.Y,	0.5f ) ) & 0xFF;
+					int yaw			=	(char)( 127 * Curve( gps.ThumbSticks.Left.X,	0.5f ) ) & 0xFF;
 
-					Console.Write( "{0,3:X} {1,3:X} {2,3:X} {3,3:X} {4,3:D} {5,3:D} {6} {7} {8}: ", bufo[0], bufo[1], bufo[2], bufo[3], bufo[4], bufo[5], roll_bias, pitch_bias, yaw_bias );
+					string outCmd		=	string.Format("X{0,3:X}{1,3:X}{2,3:X}{3,3:X}", throttle, roll, pitch, yaw );
 
+					Console.Write("OUT CMD : {0}  - ", outCmd );
+					port.WriteLine( outCmd + "\n" );
 
+					var inCmd = PopInCommand();
 
-					//port.Read( bufi, 0, 4 );
-					var s = port.ReadLine();
-					//port.
+					if (inCmd!=null) {
+						Console.WriteLine("IN CMD  : {0}", inCmd );
+						while ( PopInCommand()!=null ) {
+							// skip the rest of the commands...
+						}
+					} else {
+						Console.WriteLine();
+					}
 
-					//Console.Write( "{0,3:X} {0,3:X} {0,3:X} {0,3:X} : ", bufi[0], bufi[1], bufi[2], bufi[3] );
-
-					Console.WriteLine(s);
-
-					Thread.Sleep(10);
+					Thread.Sleep(30);
 				}
 
 			} catch (Exception ex) {
@@ -97,9 +135,19 @@ namespace ConsoleControl {
 				Console.WriteLine("{0}", ex.Message);
 				Console.WriteLine("Press Enter...");
 				Console.ReadLine();
+				if (port.IsOpen) {
+					port.Close();
+				}
 				port.Dispose();
 				port = null;
 			}
+
+
+			if (port.IsOpen) {
+				port.Close();
+			}
+			port.Dispose();
+			port = null;
 		}
 	}
 }
