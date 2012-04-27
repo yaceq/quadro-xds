@@ -22,6 +22,9 @@
 float itg3200::bias_x = 0;
 float itg3200::bias_y = 0;
 float itg3200::bias_z = 0;
+int itg3200::gx = 0;
+int itg3200::gy = 0;
+int itg3200::gz = 0;
 
 void itg3200::init()
 {
@@ -89,6 +92,8 @@ void itg3200::get_raw_data ( int &x, int &y, int &z )
   
   z =  Wire.read() << 8;
   z |= Wire.read();
+  
+  gx = x; gy = y; gz = z;
 }
 
 

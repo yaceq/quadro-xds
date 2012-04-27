@@ -5,6 +5,7 @@ class itg3200 {
     static void init       ( void );
     static void calibrate  ( int count, int dt );
     static void get_data   ( float &x, float &y, float &z );
+    static int gx, gy, gz;
   protected:
     static void get_raw_data ( int &x, int &y, int &z );
     static float bias_x;

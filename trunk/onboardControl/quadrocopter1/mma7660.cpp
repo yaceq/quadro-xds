@@ -18,7 +18,9 @@
 float mma7660::bias_x = 0;
 float mma7660::bias_y = 0;
 float mma7660::bias_z = 0;
- 
+char mma7660::ax = 0; 
+char mma7660::ay = 0; 
+char mma7660::az = 0; 
  
 void mma7660::init()
 {
@@ -78,6 +80,7 @@ void mma7660::get_raw_data( char &x, char &y, char &z )
     x = ((char)((x)<<2))/4;
     y = ((char)((y)<<2))/4;
     z = ((char)((z)<<2))/4;
+    ax = x; ay = y; az = z;
   }
 }
 

@@ -5,6 +5,7 @@ class mma7660 {
     static void init      ( void );
     static void calibrate ( int count, int dt );
     static void get_data  ( float &x, float &y, float &z );
+    static char ax, ay, az;
   protected:
     static void get_raw_data ( char &x, char &y, char &z );
     static void i2csend ( byte addr, byte value );  
