@@ -24,9 +24,9 @@ void setup()
   
 //  rcbt::init();
   itg3200::init();
-  itg3200::calibrate(100, 50);
+  itg3200::calibrate(100, 30);
   mma7660::init();
-  mma7660::calibrate(100, 50);
+  mma7660::calibrate(100, 30);
 }
 
 
@@ -57,8 +57,8 @@ void apply_control( float throttle, float roll, float pitch, float yaw, float fa
     srv3.write( pwm3 );  srv4.write( pwm4 );
   }
   char str[64];
-  sprintf(str, "%x %x %x %x", pwm1, pwm1, pwm3, pwm4);
-  Serial.println( str );
+  //sprintf(str, "%x %x %x %x", pwm1, pwm1, pwm3, pwm4);
+  //Serial.println( str );
 }
 
 
@@ -68,9 +68,9 @@ void loop()
   itg3200::get_data(a,b,c);
   mma7660::get_data(x,y,z);
   
-  int stb_roll  = ( -y/2 - a/80 );
-  int stb_pitch = (  x/2 - b/80 );
-  int stb_yaw   = c/10;
+  int stb_roll  = ( -y/3 - a/40 );
+  int stb_pitch = (  x/3 - b/40 );
+  int stb_yaw   = c/40;
   
   apply_control( throttle, roll + stb_roll, pitch + stb_pitch, yaw + stb_yaw, 0.1f );
   
@@ -100,10 +100,10 @@ void loop()
   }
   
   loop_count++;
-  if (loop_count>30) {
+  if (loop_count>10) {
     loop_count=0;
     char str[64];
-    sprintf(str, "X %x %x %x", itg3200::gx, itg3200::gy, itg3200::gz);
+    sprintf(str, "X %d %d %d %d %d %d", itg3200::gx, itg3200::gy, itg3200::gz, mma7660::ax, mma7660::ay, mma7660::az);
     Serial.println(str);
   }
 }
