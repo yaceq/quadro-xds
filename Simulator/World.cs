@@ -30,6 +30,8 @@ namespace Simulator {
 		Model		worldModel;
 		Space		space;
 		ModelDrawer	drawer;
+        SpriteBatch spriteBatch;
+
 		public GameTime	worldTime;
 
 		public Space		Space	{ get { return space;	} }
@@ -71,6 +73,8 @@ namespace Simulator {
 
 			worldModel	=	Game.Content.Load<Model>(worldModelName);
 
+            spriteBatch = new SpriteBatch(Game.GraphicsDevice);
+
 
             Vector3[] staticTriangleVertices;
             int[] staticTriangleIndices;
@@ -86,7 +90,7 @@ namespace Simulator {
 
 			Listener	=	new AudioListener();
 
-			quadrocopters_list = new List<Quadrocopter>() { new Quadrocopter(Game, this, Vector3.Zero) };
+            quadrocopters_list = new List<Quadrocopter>() { new Quadrocopter(Game, this, Vector3.Zero, "Quad1"), new Quadrocopter(Game, this, Vector3.Zero, "Quad2"), new Quadrocopter(Game, this, Vector3.Zero, "Quad3") };
 
 			quadrocopter = quadrocopters_list[0];
 
@@ -275,6 +279,25 @@ namespace Simulator {
 			Listener.Up			=	Matrix.Invert(view).Up;
 
 
+            // Draw onboard cameras
+            foreach (var qCopter in quadrocopters_list)
+            {
+                Game.GraphicsDevice.SetRenderTarget(qCopter.camera.cVPort);
+                Game.GraphicsDevice.Clear(Color.Black);
+
+                Matrix camProj, camView;
+                qCopter.camera.GetPV(qCopter.Transform, out camProj, out camView);
+
+                foreach (var quadrocop in quadrocopters_list)
+                {
+                    quadrocop.Draw(dt, camView, camProj);
+                }
+
+                SimulatorGame.DrawModel(worldModel, Matrix.Identity, camView, camProj);
+            }
+
+            Game.GraphicsDevice.SetRenderTarget(null);
+
 			//quadrocopter.Draw( dt, view, proj );
 			foreach (var quadrocop in quadrocopters_list)
 			{
@@ -283,6 +306,13 @@ namespace Simulator {
 
 			SimulatorGame.DrawModel( worldModel, Matrix.Identity, view, proj );
 
+
+            spriteBatch.Begin();
+            for ( int i = 0; i < quadrocopters_list.Count; i++ )
+            {
+                spriteBatch.Draw((Texture2D)quadrocopters_list[i].camera.cVPort, new Rectangle(0, 250*i, 250, 250), Color.White);
+            }
+            spriteBatch.End();
 
 			if ( cfg.ShowBodies ) {
 				drawer.Draw( view, proj );

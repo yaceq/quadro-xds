@@ -333,14 +333,11 @@
 			// 
 			this.listBox1.Dock = System.Windows.Forms.DockStyle.Bottom;
 			this.listBox1.FormattingEnabled = true;
-			this.listBox1.Items.AddRange(new object[] {
-            "123",
-            ",kom,",
-            ".po,po"});
 			this.listBox1.Location = new System.Drawing.Point(0, 277);
 			this.listBox1.Name = "listBox1";
 			this.listBox1.Size = new System.Drawing.Size(317, 82);
 			this.listBox1.TabIndex = 4;
+            this.listBox1.Click += new System.EventHandler(listBox1_Click);
 			// 
 			// panel1
 			// 
