@@ -30,8 +30,12 @@ namespace Simulator {
 
 			settingsPropertyGrid.SelectedObject = game.GetService<Settings>().Configuration;
 			//quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopter;
-			quadrocopterPropertyGrid.SelectedObjects = game.GetService<World>().quadrocopters_list.ToArray();
+			quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopters_list[0];
 
+            foreach (var qc in game.GetService<World>().quadrocopters_list)
+            {
+                listBox1.Items.Add(qc.QuadName);
+            }
 
 			settingsPropertyGrid.CollapseAllGridItems();
 			quadrocopterPropertyGrid.CollapseAllGridItems();
@@ -244,5 +248,9 @@ namespace Simulator {
 		Thread		thread;
 
 
+        void listBox1_Click(object sender, System.EventArgs e)
+        {
+            quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopters_list[listBox1.SelectedIndex];
+        }
 	}
 }

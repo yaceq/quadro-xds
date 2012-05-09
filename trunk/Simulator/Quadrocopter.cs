@@ -51,6 +51,8 @@ namespace Simulator {
 
 		Box		box;
 
+        public string QuadName;
+
 		float	rpm1 = 0;
 		float	rpm2 = 0;
 		float	rpm3 = 0;
@@ -88,9 +90,11 @@ namespace Simulator {
 
 		public Vector3 Position { get { return box.WorldTransform.Translation; } }
 		public Matrix  Transform { get { return box.WorldTransform; } }
+
+        public QuadOnboardCamera camera;
 																					   
 
-		public Quadrocopter( Game game, World world, Vector3 position )
+		public Quadrocopter( Game game, World world, Vector3 position, string Name )
 		{
 			MaxRPM			=	20000;	//	rotations per minute
 			MaxRotorThrust	=	2.75f;	//	1100 gramms / 4 motors
@@ -99,7 +103,10 @@ namespace Simulator {
 			AirResistance	=	0.10f;	//	
 			ArmLength		=	0.15f;
 			LinearSize		=	new Vector3( 0.4f, 0.10f, 0.4f );
-			
+            QuadName = Name;
+
+            camera = new QuadOnboardCamera(game.GraphicsDevice);
+
 			EnableStabilization		=	true;
 			StabilizationFactor		=	-0.3f;
 			StabilizationDamping	=	 0.5f;
@@ -251,14 +258,12 @@ namespace Simulator {
 
 			float avgRpm = ( gps.Triggers.Left + world.Mouse3DTranslation.Y / 1.0f ) * MaxRPM;
 
-			if (ks.IsKeyDown(Keys.NumPad8)) avgRpm = MaxRPM;
-
 			trpm1 = avgRpm;
 			trpm2 = avgRpm;
 			trpm3 = avgRpm;
 			trpm4 = avgRpm;
 
-			Stabilize(dt);
+			//Stabilize(dt);
 
 			var m3drot =  world.Mouse3DRotationAxis * world.Mouse3DRotationAngle / 80.0f;
 			
@@ -277,9 +282,72 @@ namespace Simulator {
 			trpm2 -= avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
 			trpm3 += avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
 			trpm4 -= avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
+
+            KeyboardControl(dt);
 		}
 
+        void KeyboardControl(float dt)
+        {
+            var ks = Keyboard.GetState();
 
+            float avgRpm = 0;
+            float divider = 16;
+
+            if (ks.IsKeyDown(Keys.NumPad0)) avgRpm = MaxRPM/1.1f;
+
+            trpm1 = avgRpm;
+            trpm2 = avgRpm;
+            trpm3 = avgRpm;
+            trpm4 = avgRpm;
+
+            Stabilize(dt);
+
+            if (ks.IsKeyDown(Keys.NumPad4))
+            {
+                trpm1 -= avgRpm * (-1) / divider;
+                trpm2 -= avgRpm * (-1) / divider;
+                trpm3 += avgRpm * (-1) / divider;
+                trpm4 += avgRpm * (-1) / divider;
+            }
+            if (ks.IsKeyDown(Keys.NumPad6))
+            {
+                trpm1 -= avgRpm * (1) / divider;
+                trpm2 -= avgRpm * (1) / divider;
+                trpm3 += avgRpm * (1) / divider;
+                trpm4 += avgRpm * (1) / divider;
+            }
+
+            if (ks.IsKeyDown(Keys.NumPad8))
+            {
+                trpm1 -= avgRpm * (1) / divider;
+                trpm2 += avgRpm * (1) / divider;
+                trpm3 += avgRpm * (1) / divider;
+                trpm4 -= avgRpm * (1) / divider;
+            }
+            if (ks.IsKeyDown(Keys.NumPad5))
+            {
+                trpm1 -= avgRpm * (-1) / divider;
+                trpm2 += avgRpm * (-1) / divider;
+                trpm3 += avgRpm * (-1) / divider;
+                trpm4 -= avgRpm * (-1) / divider;
+            }
+
+            if (ks.IsKeyDown(Keys.NumPad7))
+            {
+                trpm1 += avgRpm * (-1) / divider;
+                trpm2 -= avgRpm * (-1) / divider;
+                trpm3 += avgRpm * (-1) / divider;
+                trpm4 -= avgRpm * (-1) / divider;
+            }
+            if (ks.IsKeyDown(Keys.NumPad9))
+            {
+                trpm1 += avgRpm * (1) / divider;
+                trpm2 -= avgRpm * (1) / divider;
+                trpm3 += avgRpm * (1) / divider;
+                trpm4 -= avgRpm * (1) / divider;
+            }
+
+        }
 
 
 		float oldYaw, oldPitch, oldRoll;

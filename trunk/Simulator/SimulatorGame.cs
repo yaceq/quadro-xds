@@ -131,7 +131,7 @@ namespace Simulator {
 
 			// TODO: Add your drawing code here
 
-			var ds = this.GetService<DebugStrings>();
+			//var ds = this.GetService<DebugStrings>();
 
 			base.Draw( gameTime );
 		}
