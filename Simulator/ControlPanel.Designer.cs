@@ -226,7 +226,7 @@
 			series10.ChartArea = "ChartArea1";
 			series10.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
 			series10.Legend = "Legend1";
-			series10.Name = "Series1";
+			series10.Name = "AngularPhase";
 			this.AngularPhaseDiagram.Series.Add(series10);
 			this.AngularPhaseDiagram.Size = new System.Drawing.Size(367, 324);
 			this.AngularPhaseDiagram.TabIndex = 2;
@@ -245,7 +245,7 @@
 			series11.ChartArea = "ChartArea1";
 			series11.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
 			series11.Legend = "Legend1";
-			series11.Name = "Series1";
+			series11.Name = "Altitude";
 			this.AltitudeDiagram.Series.Add(series11);
 			this.AltitudeDiagram.Size = new System.Drawing.Size(367, 323);
 			this.AltitudeDiagram.TabIndex = 1;
@@ -264,7 +264,7 @@
 			series12.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
 			series12.IsVisibleInLegend = false;
 			series12.Legend = "Legend1";
-			series12.Name = "Series1";
+			series12.Name = "LinearPhase";
 			this.LinearPhaseDiagram.Series.Add(series12);
 			this.LinearPhaseDiagram.Size = new System.Drawing.Size(367, 323);
 			this.LinearPhaseDiagram.TabIndex = 0;

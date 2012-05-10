@@ -155,21 +155,21 @@ namespace Simulator {
 			PitchRollDiagram.Series["Pitch"].Points.AddXY(world.worldTime.TotalGameTime.TotalSeconds, pitch);
 			PitchRollDiagram.Series["Roll"].Points.AddXY(world.worldTime.TotalGameTime.TotalSeconds, roll);
 
-			AngularPhaseDiagram.Series["Series1"].Points.AddXY(pitch, roll);
+            AngularPhaseDiagram.Series["AngularPhase"].Points.AddXY(pitch, roll);
 
-			LinearPhaseDiagram.Series["Series1"].Points.AddXY(world.quadrocopter.Position.X, -world.quadrocopter.Position.Z);
-			AltitudeDiagram.Series["Series1"].Points.AddXY(world.worldTime.TotalGameTime.TotalSeconds, world.quadrocopter.Position.Y);
+            LinearPhaseDiagram.Series["LinearPhase"].Points.AddXY(world.quadrocopter.Position.X, -world.quadrocopter.Position.Z);
+			AltitudeDiagram.Series["Altitude"].Points.AddXY(world.worldTime.TotalGameTime.TotalSeconds, world.quadrocopter.Position.Y);
 
-			if (AltitudeDiagram.Series["Series1"].Points.Count > 500)
+            if (AltitudeDiagram.Series["Altitude"].Points.Count > 500)
 			{
-				AltitudeDiagram.Series["Series1"].Points.RemoveAt(0);
-				LinearPhaseDiagram.Series["Series1"].Points.RemoveAt(0);
+                AltitudeDiagram.Series["Altitude"].Points.RemoveAt(0);
+                LinearPhaseDiagram.Series["LinearPhase"].Points.RemoveAt(0);
 
 				PitchRollDiagram.Series["Yaw"].Points.RemoveAt(0);
 				PitchRollDiagram.Series["Pitch"].Points.RemoveAt(0);
 				PitchRollDiagram.Series["Roll"].Points.RemoveAt(0);
 
-				AngularPhaseDiagram.Series["Series1"].Points.RemoveAt(0);
+                AngularPhaseDiagram.Series["AngularPhase"].Points.RemoveAt(0);
 
 
 				AltitudeDiagram.ResetAutoValues();

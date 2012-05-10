@@ -90,7 +90,7 @@ namespace Simulator {
 
 			Listener	=	new AudioListener();
 
-            quadrocopters_list = new List<Quadrocopter>() { new Quadrocopter(Game, this, Vector3.Zero, "Quad1"), new Quadrocopter(Game, this, Vector3.Zero, "Quad2"), new Quadrocopter(Game, this, Vector3.Zero, "Quad3") };
+            quadrocopters_list = new List<Quadrocopter>() { new Quadrocopter(Game, this, Vector3.Zero, "Quad1") };//, new Quadrocopter(Game, this, Vector3.Zero, "Quad2"), new Quadrocopter(Game, this, Vector3.Zero, "Quad3") };
 
 			quadrocopter = quadrocopters_list[0];
 
