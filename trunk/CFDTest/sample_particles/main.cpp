@@ -12,8 +12,8 @@ using namespace std;
 const int	PARTICLE_N = 10*1024;
 int			g_buttonState = 0;
 int			g_mouse_x = 0, g_mouse_y = 0;
-float		g_view_phi = 10, g_view_theta = 10;
-float		g_view_dist = 70.0f;
+float		g_view_phi = 3, g_view_theta = 5;
+float		g_view_dist = 40.0f;
 int			g_w, g_h;
 bool		g_stereo;
 
@@ -73,6 +73,8 @@ void drawbox(float xsz, float ysz, float zsz)
 	glEnd();
 }
 
+extern float y;
+
 
 void display()
 {
@@ -117,6 +119,26 @@ void display()
 		glDisableClientState(GL_COLOR_ARRAY);
 
 		//drawbox( 32,32,32 );
+
+		glPushMatrix();
+		glTranslatef(-3,y-16,-3);
+		drawbox(4,1,4);
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslatef( 3,y-16,-3);
+		drawbox(4,1,4);
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslatef( 3,y-16, 3);
+		drawbox(4,1,4);
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslatef(-3,y-16, 3);
+		drawbox(4,1,4);
+		glPopMatrix();
 
 
         // print stats
@@ -205,7 +227,7 @@ int main(int argc, char **argv)
 	}
 	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE | (g_stereo ? GLUT_STEREO : 0));
     //glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
-    glutInitWindowSize(1280, 800);
+    glutInitWindowSize(800, 600);
 
     glutCreateWindow("CUDA n-body system");
 

@@ -66,12 +66,18 @@ __global__ void update_particles ( int particle_num, FVertex *prt, float dt, int
 	prt[tid].pos.x = prt[tid].pos.x + tex3D( tex_velocity_x, uvw.x, uvw.y, uvw.z );
 	prt[tid].pos.y = prt[tid].pos.y + tex3D( tex_velocity_y, uvw.x, uvw.y, uvw.z );
 	prt[tid].pos.z = prt[tid].pos.z + tex3D( tex_velocity_z, uvw.x, uvw.y, uvw.z );
-	if ( prt[tid].pos.x >  nx/2 ) prt[tid].pos.x -= nx; 
-	if ( prt[tid].pos.x < -nx/2 ) prt[tid].pos.x += nx; 
-	if ( prt[tid].pos.y >  nx/2 ) prt[tid].pos.y -= ny; 
-	if ( prt[tid].pos.y < -nx/2 ) prt[tid].pos.y += ny; 
-	if ( prt[tid].pos.z >  nx/2 ) prt[tid].pos.z -= nz; 
-	if ( prt[tid].pos.z < -nx/2 ) prt[tid].pos.z += nz; 
+	if ( prt[tid].pos.x >  nx/2 ) prt[tid].pos.x =  nx/2; 
+	if ( prt[tid].pos.x < -nx/2 ) prt[tid].pos.x = -nx/2; 
+	if ( prt[tid].pos.y >  nx/2 ) prt[tid].pos.y =  nx/2; 
+	if ( prt[tid].pos.y < -nx/2 ) prt[tid].pos.y = -nx/2; 
+	if ( prt[tid].pos.z >  nx/2 ) prt[tid].pos.z =  nx/2; 
+	if ( prt[tid].pos.z < -nx/2 ) prt[tid].pos.z = -nx/2; 
+	//if ( prt[tid].pos.x >  nx/2 ) prt[tid].pos.x -= nx; 
+	//if ( prt[tid].pos.x < -nx/2 ) prt[tid].pos.x += nx; 
+	//if ( prt[tid].pos.y >  nx/2 ) prt[tid].pos.y -= ny; 
+	//if ( prt[tid].pos.y < -nx/2 ) prt[tid].pos.y += ny; 
+	//if ( prt[tid].pos.z >  nx/2 ) prt[tid].pos.z -= nz; 
+	//if ( prt[tid].pos.z < -nx/2 ) prt[tid].pos.z += nz; 
 	prt[tid].color.x = 0.1;
 	prt[tid].color.y = 0.1;
 	prt[tid].color.z = 0.2;
@@ -240,7 +246,7 @@ __global__ void gradient ( float *velx, float *vely, float *velz, int nx, int ny
 
 
 
-__global__ void propeller ( float *velx, float *vely, float *velz, int nx, int ny, int nz, float sx, float sy, float sz )
+__global__ void propeller ( float *velx, float *vely, float *velz, int nx, int ny, int nz, float sx, float sy, float sz, int px, int py, int pz )
 {
 	//	cmpute voxel indices
 	int const x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -250,10 +256,16 @@ __global__ void propeller ( float *velx, float *vely, float *velz, int nx, int n
   
 	float3 v = make_float3(0,0,0);
 
-	if ( x >= 14 && x < 18 )
-	if ( y >= 14 && y < 18 )
-	if ( z >= 14 && z < 18 )
+	if ( x >= px-1 && x <= px+1 )
+	if ( y >= py-1 && y <= py+1 )
+	if ( z >= pz-1 && z <= pz+1 )
 		v = make_float3(sx,sy,sz);
+
+	//if(x == 14 && ( y == 14 || y == 15 ) && z == 14) v = make_float3(sx,sy,sz);
+	//if(x == 18 && ( y == 14 || y == 15 ) && z == 14) v = make_float3(sx,sy,sz);
+	//if(x == 14 && ( y == 18 || y == 19 ) && z == 14) v = make_float3(sx,sy,sz);
+	//if(x == 18 && ( y == 18 || y == 19 ) && z == 14) v = make_float3(sx,sy,sz);
+
 
 	velx[i] += v.x;
 	vely[i] += v.y;
@@ -309,6 +321,8 @@ void cfd_solver::init_gpu()
 
 float t = 0;
 
+float y = 4;
+
 void cfd_solver::launch_gpu( float dt )
 {
 	t += dt;
@@ -336,7 +350,7 @@ void cfd_solver::launch_gpu( float dt )
 	copy_back( d_velocity_z_array, d_velocity_z );
 
 	int N = 10;
-	float visc  = 0.1f;
+	float visc  = 0.073f;
 	float alpha = dx*dx / visc / dt;
 	float beta  = 6 + alpha;
 
@@ -344,6 +358,8 @@ void cfd_solver::launch_gpu( float dt )
 	/*---------------------------------------------------------------
 	*	poisson viscosity :
 	---------------------------------------------------------------*/
+
+	y += dt;
 
 	for (int i=0; i<N; i++) {
 		jacobi<<<grid_size_3d, block_size_3d>>>( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz, alpha, beta );
@@ -361,8 +377,15 @@ void cfd_solver::launch_gpu( float dt )
 	*	external forces :
 	---------------------------------------------------------------*/
 
-	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz, 4*cos(1*t), 4*sin(0.2*t), 4*cos(0.3*t) );
+	float r0  = ((float)rand()/(float)RAND_MAX*2-1) / 8.0f;
+	float r1  = ((float)rand()/(float)RAND_MAX*2-1) / 8.0f;
+	float r2  = ((float)rand()/(float)RAND_MAX*2-1) / 8.0f;
+	float r3  = ((float)rand()/(float)RAND_MAX*2-1) / 8.0f;
 
+	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz, 0+r0, -2+r0, 0+r0, 13, y, 13 );
+	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz, 0+r1, -2+r1, 0+r1, 19, y, 13 );
+	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz, 0+r2, -2+r2, 0+r2, 13, y, 19 );
+	propeller<<<grid_size_3d, block_size_3d>>> ( d_velocity_x, d_velocity_y, d_velocity_z, nx, ny, nz, 0+r3, -2+r3, 0+r3, 19, y, 19 );
 
 	/*---------------------------------------------------------------
 	*	poisson pressure :
