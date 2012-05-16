@@ -23,3 +23,13 @@ class cmd_recv {
     static int count;
     static char in_cmd[MAX_COMMAND_SIZE]; 
 };
+
+
+class cmd_recv_bt {
+  public:
+    static void init();
+    static char *recv_cmd();
+  protected:
+    static int count;
+    static char in_cmd[MAX_COMMAND_SIZE]; 
+};

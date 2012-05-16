@@ -21,9 +21,11 @@ namespace QuadroTracker {
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
 
-			float trim_roll	= 0;
-			float trim_pitch	= 0;
-			float trim_yaw	= 0;
+			float trim_roll		= 90;
+			float trim_pitch	= 90;
+			float trim_yaw		= 90;
+
+		public Tracker	tracker;
 
 		public QuadroTracker ()
 		{
@@ -56,7 +58,6 @@ namespace QuadroTracker {
 		protected override void OnExiting ( object sender, EventArgs args )
 		{
 			port.Close();
-
 			base.OnExiting( sender, args );
 		}
 
@@ -70,13 +71,22 @@ namespace QuadroTracker {
 			return sign * value;
 		}
 
+		
+		#region COM port stuff
 		SerialPort	port = null;
 
 		List<string> commandList = new List<string>();
 		string incomingCommand = "";
 
-		void PushInCommand  ( string s ) { commandList.Add( s ); }
-		string PopInCommand ( ) {
+
+		void PushInCommand  ( string s ) 
+		{ 
+			commandList.Add( s ); 
+		}
+
+
+		string PopInCommand ( ) 
+		{
 			if (commandList.Count==0) {
 				return null;
 			} else {
@@ -101,49 +111,39 @@ namespace QuadroTracker {
 				}
 			}
 		}
+		#endregion
 
 
 
-
-		/// <summary>
-		/// Allows the game to perform any initialization it needs to before starting to run.
-		/// This is where it can query for any required services and load any non-graphic
-		/// related content.  Calling base.Initialize will enumerate through any components
-		/// and initialize them as well.
-		/// </summary>
 		protected override void Initialize ()
 		{
-			// TODO: Add your initialization logic here
-
 			base.Initialize();
 		}
 
-		/// <summary>
-		/// LoadContent will be called once per game and is the place to load
-		/// all of your content.
-		/// </summary>
+
+
 		protected override void LoadContent ()
 		{
-			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch( GraphicsDevice );
-
-			// TODO: use this.Content to load your game content here
 		}
 
-		/// <summary>
-		/// UnloadContent will be called once per game and is the place to unload
-		/// all content.
-		/// </summary>
+
+
 		protected override void UnloadContent ()
 		{
-			// TODO: Unload any non ContentManager content here
 		}
 
-		/// <summary>
-		/// Allows the game to run logic such as updating the world,
-		/// checking for collisions, gathering input, and playing audio.
-		/// </summary>
-		/// <param name="gameTime">Provides a snapshot of timing values.</param>
+
+		struct RawImuData {
+			public int xRot;
+			public int yRot;
+			public int zRot;
+		}
+
+
+		List<RawImuData>	calibrationData = new List<RawImuData>();
+
+
 		protected override void Update ( GameTime gameTime )
 		{
 			var dr = this.GetService<DebugRender>();
@@ -152,168 +152,45 @@ namespace QuadroTracker {
 			dr.Clear();
 			ds.Clear();
 
-			time += (float)gameTime.ElapsedGameTime.TotalSeconds;
+			string cmd = PopInCommand();
 
-			var gps = GamePad.GetState(0);
-
-			// Allows the game to exit
-			if (Keyboard.GetState().IsKeyDown(Keys.Escape) || gps.IsButtonDown(Buttons.Back)) {
-				this.Exit();
+			if (cmd!=null) {
+				Console.WriteLine("CMD: {0}", cmd);
+				var list	= cmd.Split(new []{' '}, StringSplitOptions.RemoveEmptyEntries);
+				RawImuData rawImuData = new RawImuData();
+				rawImuData.xRot	= Int16.Parse(list[1], NumberStyles.HexNumber);
+				rawImuData.yRot	= Int16.Parse(list[2], NumberStyles.HexNumber);
+				rawImuData.zRot	= Int16.Parse(list[3], NumberStyles.HexNumber);
+								
 			}
 
-			if (gps.IsButtonDown(Buttons.A)) calibrating = true;
-			if (gps.IsButtonDown(Buttons.B)) calibrating = false;
-
-			if (gps.DPad.Left  == ButtonState.Pressed)	 trim_roll	-= 0.3f;
-			if (gps.DPad.Right == ButtonState.Pressed)	 trim_roll	+= 0.3f;
-			if (gps.DPad.Down  == ButtonState.Pressed)	 trim_pitch	-= 0.3f;
-			if (gps.DPad.Up    == ButtonState.Pressed)	 trim_pitch	+= 0.3f;
-			if (gps.IsButtonDown(Buttons.LeftShoulder))  trim_yaw	+= 0.3f;
-			if (gps.IsButtonDown(Buttons.RightShoulder)) trim_yaw	-= 0.3f;
-			/*if (gps.IsButtonDown(Buttons.X)) roll_bias--;
-			if (gps.IsButtonDown(Buttons.B)) roll_bias++;
-			if (gps.IsButtonDown(Buttons.Y)) pitch_bias++;
-			if (gps.IsButtonDown(Buttons.A)) pitch_bias--;
-			if (gps.IsButtonDown(Buttons.LeftShoulder)) yaw_bias++;
-			if (gps.IsButtonDown(Buttons.RightShoulder)) yaw_bias--;*/
-
-			int throttle	=	(int)MathHelper.Clamp( (127 * Curve( gps.Triggers.Left,		  1.0f )),		 	    -127, 127 ) & 0xFF;
-			int roll		=	(int)MathHelper.Clamp( (127 * Curve( gps.ThumbSticks.Right.X, 0.7f )) + trim_roll,  -127, 127 ) & 0xFF;
-			int pitch		=	(int)MathHelper.Clamp( (127 * Curve( gps.ThumbSticks.Right.Y, 0.7f )) + trim_pitch, -127, 127 ) & 0xFF;
-			int yaw			=	(int)MathHelper.Clamp( (127 * Curve( gps.ThumbSticks.Left.X,  0.7f )) + trim_yaw,   -127, 127 ) & 0xFF;
-
-			string outCmd		=	string.Format("X{0,3:X}{1,3:X}{2,3:X}{3,3:X}", throttle, roll, pitch, yaw );
-
-			Console.Write("OUT CMD : {0}  - ", outCmd );
-			port.WriteLine( outCmd + "\n" );
-
-			var inCmd = PopInCommand();
-
-			if (inCmd!=null) {
-				Console.WriteLine("IN CMD  : {0}", inCmd );
-
-				HandleInCommand( inCmd );
-
-				while ( PopInCommand()!=null ) {
-					// skip the rest of the commands...
-				}
-			} else {
-				Console.WriteLine();
-			}
+			port.WriteLine("X 0 0 0 0" + "\n");
 
 			base.Update( gameTime );
 		}
 
 
 
-		List<Vector3>	accelData;
-		List<Vector3>	gyroData ;
-
-		Vector3	currentAccel;
-		Vector3 currentGyro;
-		Vector3	biasAccel;
-		Vector3 biasGyro;
-
-		float time = 0;
-		float lastIMtime = 0;
-		float deltaIMtime = 0;
-		bool  calibrating = true;
-
-		void HandleInCommand( string s )
-		{
-			float kG = 1.5f*9.8f/32;
-
-			var list = s.Split(new[]{' '}, StringSplitOptions.RemoveEmptyEntries);
-			if (list[0]=="X") {
-				deltaIMtime = time - lastIMtime;
-				lastIMtime = time;
-
-				currentGyro.X  = MathHelper.ToRadians(float.Parse(list[1]) / 14.375f);
-				currentGyro.Y  = MathHelper.ToRadians(float.Parse(list[2]) / 14.375f);
-				currentGyro.Z  = MathHelper.ToRadians(float.Parse(list[3]) / 14.375f);
-				currentAccel.X = float.Parse(list[4]) * kG ;
-				currentAccel.Y = float.Parse(list[5]) * kG ;
-				currentAccel.Z = float.Parse(list[6]) * kG ;
-
-				currentAccel -= biasAccel;
-				currentGyro -= biasGyro;
-
-				if (calibrating) {
-					if (accelData==null) {
-						biasAccel = Vector3.Zero;
-						biasGyro  = Vector3.Zero;
-						accelData = new List<Vector3>();
-						gyroData  = new List<Vector3>();
-						accelData.Add( currentAccel );
-						gyroData.Add( currentGyro );
-					} else {
-						accelData.Add( currentAccel );
-						gyroData.Add( currentGyro );
-					}
-				} else {
-					if (accelData!=null) {
-						foreach (var v in accelData) { biasAccel += v; }
-						foreach (var v in gyroData)  { biasGyro += v; }
-						biasAccel /= accelData.Count;
-						biasGyro  /= gyroData.Count;
-						accelData = null;
-						gyroData  = null;
-						copter = Matrix.Identity;
-					} else {
-
-						float dt = 	deltaIMtime;
-
-						Quaternion qx = Quaternion.CreateFromAxisAngle( Vector3.UnitX, currentGyro.X * dt );
-						Quaternion qy = Quaternion.CreateFromAxisAngle( Vector3.UnitY, currentGyro.Y * dt );
-						Quaternion qz = Quaternion.CreateFromAxisAngle( Vector3.UnitZ, currentGyro.Z * dt );
-						Quaternion q = qx + qy + qz;
-						q.Normalize();
-
-						copter *= Matrix.CreateFromQuaternion( q );
-						velocity += currentAccel * dt;
-
-						//copter.Translation += velocity * dt;
-
-					}
-				}
-			}
-		}
-
-
-		Vector3 velocity = Vector3.Zero;
-		Matrix	copter  = Matrix.Identity;
-
-
-
-
-		/// <summary>
-		/// This is called when the game should draw itself.
-		/// </summary>
-		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw ( GameTime gameTime )
 		{
+			//UpdateTracking( (float)gameTime.ElapsedGameTime.TotalSeconds );
+
 			GraphicsDevice.Clear( Color.Black );
 
 			var dr = this.GetService<DebugRender>();
 			var ds = this.GetService<DebugStrings>();
 			// TODO: Add your drawing code here
 
-			var view = Matrix.CreateLookAt( Vector3.Backward * 5 + Vector3.Up * 3, Vector3.Zero, Vector3.Up );
+			var view = Matrix.CreateLookAt( Vector3.Backward * 3 + Vector3.Up * 1.5f, Vector3.Zero, Vector3.Up );
 			var proj = Matrix.CreatePerspectiveFieldOfView( MathHelper.ToRadians(70), GraphicsDevice.Viewport.AspectRatio, 0.1f, 100 );
+
+
+			
+
 
 			dr.SetMatrix( view, proj );
 			dr.DrawGrid(10);
 
-			dr.DrawBasis( copter, 0.3f );
-			dr.DrawRing( copter, 0.2f, Color.Yellow );
-
-			if (calibrating) {
-				ds.Add(string.Format("Calibrating : {0} samples", accelData==null ? 0 : accelData.Count));
-			} else {
-				ds.Add(string.Format("Gyro bias  : {0}", biasGyro));
-				ds.Add(string.Format("Accel bias : {0}", biasAccel));
-				ds.Add(string.Format("IM dT : {0}", deltaIMtime));
-			}
 
 			base.Draw( gameTime );
 		}
