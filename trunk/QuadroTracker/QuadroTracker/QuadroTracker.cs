@@ -156,15 +156,18 @@ namespace QuadroTracker {
 
 			if (cmd!=null) {
 				Console.WriteLine("CMD: {0}", cmd);
-				var list	= cmd.Split(new []{' '}, StringSplitOptions.RemoveEmptyEntries);
-				RawImuData rawImuData = new RawImuData();
-				rawImuData.xRot	= Int16.Parse(list[1], NumberStyles.HexNumber);
-				rawImuData.yRot	= Int16.Parse(list[2], NumberStyles.HexNumber);
-				rawImuData.zRot	= Int16.Parse(list[3], NumberStyles.HexNumber);
-								
+				if (cmd[0]=='X') {
+					var list	= cmd.Split(new []{' '}, StringSplitOptions.RemoveEmptyEntries);
+					RawImuData rawImuData = new RawImuData();
+					rawImuData.xRot	= Int16.Parse(list[1], NumberStyles.HexNumber);
+					rawImuData.yRot	= Int16.Parse(list[2], NumberStyles.HexNumber);
+					rawImuData.zRot	= Int16.Parse(list[3], NumberStyles.HexNumber);
+				}								
 			}
 
-			port.WriteLine("X 0 0 0 0" + "\n");
+			port.WriteLine("X 0 0 0 0\n");
+
+			Thread.Sleep(40);
 
 			base.Update( gameTime );
 		}
