@@ -41,11 +41,12 @@ void loop()
     int t=0,r=0,p=0,y=0;
     if (cmd[0]=='X') {
       sscanf(cmd, "X %x %x %x %x", &t, &r, &p, &y);
-      char answ[32];
-      sprintf(answ, "X %04X %04X %04X", itg3200::gx, itg3200::gy, itg3200::gz ); 
-      Serial.println(answ);
     }
   }
 
+  char answ[32];
+  sprintf(answ, "X %04X %04X %04X", itg3200::gx, itg3200::gy, itg3200::gz ); 
+  Serial.println(answ);
 
+  delay(40);
 }
