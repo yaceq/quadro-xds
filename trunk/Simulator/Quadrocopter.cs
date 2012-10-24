@@ -91,8 +91,6 @@ namespace Simulator {
 		public Vector3 Position { get { return box.WorldTransform.Translation; } }
 		public Matrix  Transform { get { return box.WorldTransform; } }
 
-        public QuadOnboardCamera camera;
-																					   
 
 		public Quadrocopter( Game game, World world, Vector3 position, string Name )
 		{
@@ -104,8 +102,6 @@ namespace Simulator {
 			ArmLength		=	0.15f;
 			LinearSize		=	new Vector3( 0.4f, 0.10f, 0.4f );
             QuadName = Name;
-
-            camera = new QuadOnboardCamera(game.GraphicsDevice);
 
 			EnableStabilization		=	true;
 			StabilizationFactor		=	-0.3f;
@@ -122,8 +118,8 @@ namespace Simulator {
 			propellerB		=	game.Content.Load<Model>( @"scenes\propellerB" );
 
 			box	=	new Box( position + Vector3.Up * LinearSize.Y/2, LinearSize.X, LinearSize.Y, LinearSize.Z, Mass );
-			box.AngularDamping = 0.2f;
-			box.LinearDamping  = 0.2f;
+			box.AngularDamping = 0.0f;
+			box.LinearDamping  = 0.0f;
 			world.Space.Add( box );
 			world.Drawer.Add( box );
 
@@ -263,7 +259,7 @@ namespace Simulator {
 			trpm3 = avgRpm;
 			trpm4 = avgRpm;
 
-			//Stabilize(dt);
+			Stabilize(dt);
 
 			var m3drot =  world.Mouse3DRotationAxis * world.Mouse3DRotationAngle / 80.0f;
 			
@@ -283,7 +279,7 @@ namespace Simulator {
 			trpm3 += avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
 			trpm4 -= avgRpm * ( gps.ThumbSticks.Left.X   + m3drot.Y )/ 8;
 
-            KeyboardControl(dt);
+            //KeyboardControl(dt);
 		}
 
         void KeyboardControl(float dt)

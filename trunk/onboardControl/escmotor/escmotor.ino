@@ -15,27 +15,6 @@ void countdown(int time)
 }
 
 
-/*void setup()
-{
-  Serial.begin(9600);
-  Serial.println("Connect the power...");
-  do {
-    delay(100);
-  } while (!Serial.available());
-  byte b = Serial.read();  
-  
-  Serial.println(b, HEX);
-}
-
-
-void loop()
-{
-    Serial.println("Ololo!");
-    delay(1000);
-}
-//*/
-
-
 void setup()
 {
   Serial.begin(9600);
@@ -48,43 +27,15 @@ void setup()
   do {
     delay(100);
   } while (!Serial.available());
-  byte b;
-  b = Serial.read();  
-  Serial.println(b, HEX);
-  b = Serial.read();  
-  Serial.println(b, HEX);
+  Serial.println("Done.");
 }
 
 
 void loop()
 {
-    for (int i=10; i<150; i+=15) {
-      Serial.println(i);
-      srv1.write(i);
-      delay(100);
-    }
-    for (int i=60; i<150; i+=15) {
-      Serial.println(i);
-      srv2.write(i);
-      delay(100);
-    }
-    for (int i=10; i<150; i+=15) {
-      Serial.println(i);
-      srv3.write(i);
-      delay(100);
-    }
-    for (int i=10; i<150; i+=15) {
-      Serial.println(i);
-      srv4.write(i);
-      delay(100);
-    }
-    
-    if (Serial.available()) {
-      srv1.write(10);
-      srv2.write(10);
-      srv3.write(10);
-      srv4.write(10);
-      while(1) {}
-    }
+  for (int i=0; i<180; i+=1) {
+    delay(30);
+    srv2.write(i);
+  }//*/
 }
 //*/
