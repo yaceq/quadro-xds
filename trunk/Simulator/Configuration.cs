@@ -21,9 +21,11 @@ namespace Simulator {
 		[Category("Rendering")]	public int			PreferredBackBufferHeight { set; get; }
 		[Category("Rendering")]	public bool			UseSecondMonitor { set; get; }
 
-		[Category("Tracker")]	public string		Host { set; get; }
+		[Category("Tracker")]			public string		Host { set; get; }
 
-		[Category("Physics")]	public bool			ShowBodies { set; get; }
+		[Category("Communications")]	public string		Port { set; get; }
+
+		[Category("Physics")]			public bool			ShowBodies { set; get; }
 
 
 		public enum CameraModes {
@@ -45,6 +47,8 @@ namespace Simulator {
 			PreferredBackBufferHeight	=	720;
 
 			Host	=	"192.168.10.1:801";
+
+			Port	=	"COM6";
 
 			CameraMode	=	CameraModes.ViewFromPoint;
 			Offset		=	Vector3.Backward + Vector3.Up * 0.25f;
