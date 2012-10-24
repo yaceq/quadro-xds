@@ -96,10 +96,10 @@ namespace Simulator {
 
 			SimulatorGame.DrawModel( frame, worldTransform, view, proj );
 
-			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( rot1/3.14f) * Matrix.CreateTranslation( arm1 * 14.0f ) * worldTransform, view, proj );
-			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-rot2/3.14f) * Matrix.CreateTranslation( arm2 * 14.0f ) * worldTransform, view, proj );
-			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( rot3/3.14f) * Matrix.CreateTranslation( arm3 * 14.0f ) * worldTransform, view, proj );
-			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-rot4/3.14f) * Matrix.CreateTranslation( arm4 * 14.0f ) * worldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( rot1/3.14f) * Matrix.CreateTranslation( arm1 * 0.15f ) * worldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-rot2/3.14f) * Matrix.CreateTranslation( arm2 * 0.15f ) * worldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( rot3/3.14f) * Matrix.CreateTranslation( arm3 * 0.15f ) * worldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-rot4/3.14f) * Matrix.CreateTranslation( arm4 * 0.15f ) * worldTransform, view, proj );
 		}
 		
 

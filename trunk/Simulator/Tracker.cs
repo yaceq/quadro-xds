@@ -145,7 +145,7 @@ namespace Simulator {
 						(float)rot[ 0], (float)rot[ 3], (float)rot[ 6], 0,
 						(float)rot[ 1], (float)rot[ 4], (float)rot[ 7], 0,
 						(float)rot[ 2], (float)rot[ 5], (float)rot[ 8], 0,
-						0, 0, 0, 0 );//*/
+						0, 0, 0, 1 );//*/
 					/*Matrix m = new Matrix( 
 						(float)rot[ 0], (float)rot[ 1], (float)rot[ 2], 0,
 						(float)rot[ 3], (float)rot[ 4], (float)rot[ 5], 0,
