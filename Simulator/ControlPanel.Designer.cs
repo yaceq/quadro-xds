@@ -45,11 +45,19 @@
 			this.settingsPropertyGrid = new System.Windows.Forms.PropertyGrid();
 			this.quadrocopterPropertyGrid = new System.Windows.Forms.PropertyGrid();
 			this.listBox1 = new System.Windows.Forms.ListBox();
+			this.trackBar1 = new System.Windows.Forms.TrackBar();
+			this.trackBar2 = new System.Windows.Forms.TrackBar();
+			this.trackBar3 = new System.Windows.Forms.TrackBar();
+			this.trackBar4 = new System.Windows.Forms.TrackBar();
 			this.menuStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
 			this.splitContainer1.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar3)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar4)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// menuStrip1
@@ -59,7 +67,7 @@
             this.quadrocopterToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(424, 24);
+			this.menuStrip1.Size = new System.Drawing.Size(511, 24);
 			this.menuStrip1.TabIndex = 0;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
@@ -134,12 +142,14 @@
 			this.connectToQuadrocopterViaCOMToolStripMenuItem.Name = "connectToQuadrocopterViaCOMToolStripMenuItem";
 			this.connectToQuadrocopterViaCOMToolStripMenuItem.Size = new System.Drawing.Size(259, 22);
 			this.connectToQuadrocopterViaCOMToolStripMenuItem.Text = "Connect to Quadrocopter via COM";
+			this.connectToQuadrocopterViaCOMToolStripMenuItem.Click += new System.EventHandler(this.connectToQuadrocopterViaCOMToolStripMenuItem_Click);
 			// 
 			// disconnectToolStripMenuItem
 			// 
 			this.disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
 			this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(259, 22);
 			this.disconnectToolStripMenuItem.Text = "Disconnect";
+			this.disconnectToolStripMenuItem.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
 			// 
 			// splitter1
 			// 
@@ -153,7 +163,7 @@
 			// 
 			this.statusStrip1.Location = new System.Drawing.Point(0, 696);
 			this.statusStrip1.Name = "statusStrip1";
-			this.statusStrip1.Size = new System.Drawing.Size(424, 22);
+			this.statusStrip1.Size = new System.Drawing.Size(511, 22);
 			this.statusStrip1.TabIndex = 7;
 			this.statusStrip1.Text = "statusStrip1";
 			// 
@@ -204,11 +214,63 @@
 			this.listBox1.TabIndex = 4;
 			this.listBox1.Click += new System.EventHandler(this.listBox1_Click);
 			// 
+			// trackBar1
+			// 
+			this.trackBar1.Location = new System.Drawing.Point(333, 27);
+			this.trackBar1.Maximum = 180;
+			this.trackBar1.Minimum = 10;
+			this.trackBar1.Name = "trackBar1";
+			this.trackBar1.Size = new System.Drawing.Size(166, 45);
+			this.trackBar1.TabIndex = 9;
+			this.trackBar1.TickFrequency = 10;
+			this.trackBar1.Value = 10;
+			this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
+			// 
+			// trackBar2
+			// 
+			this.trackBar2.Location = new System.Drawing.Point(333, 78);
+			this.trackBar2.Maximum = 180;
+			this.trackBar2.Minimum = 10;
+			this.trackBar2.Name = "trackBar2";
+			this.trackBar2.Size = new System.Drawing.Size(166, 45);
+			this.trackBar2.TabIndex = 10;
+			this.trackBar2.TickFrequency = 10;
+			this.trackBar2.Value = 10;
+			this.trackBar2.Scroll += new System.EventHandler(this.trackBar1_Scroll);
+			// 
+			// trackBar3
+			// 
+			this.trackBar3.Location = new System.Drawing.Point(333, 129);
+			this.trackBar3.Maximum = 180;
+			this.trackBar3.Minimum = 10;
+			this.trackBar3.Name = "trackBar3";
+			this.trackBar3.Size = new System.Drawing.Size(166, 45);
+			this.trackBar3.TabIndex = 11;
+			this.trackBar3.TickFrequency = 10;
+			this.trackBar3.Value = 10;
+			this.trackBar3.Scroll += new System.EventHandler(this.trackBar1_Scroll);
+			// 
+			// trackBar4
+			// 
+			this.trackBar4.Location = new System.Drawing.Point(333, 180);
+			this.trackBar4.Maximum = 180;
+			this.trackBar4.Minimum = 10;
+			this.trackBar4.Name = "trackBar4";
+			this.trackBar4.Size = new System.Drawing.Size(166, 45);
+			this.trackBar4.TabIndex = 12;
+			this.trackBar4.TickFrequency = 10;
+			this.trackBar4.Value = 10;
+			this.trackBar4.Scroll += new System.EventHandler(this.trackBar1_Scroll);
+			// 
 			// ControlPanel
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(424, 718);
+			this.ClientSize = new System.Drawing.Size(511, 718);
+			this.Controls.Add(this.trackBar4);
+			this.Controls.Add(this.trackBar3);
+			this.Controls.Add(this.trackBar2);
+			this.Controls.Add(this.trackBar1);
 			this.Controls.Add(this.splitter1);
 			this.Controls.Add(this.splitContainer1);
 			this.Controls.Add(this.menuStrip1);
@@ -222,6 +284,10 @@
 			this.splitContainer1.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
 			this.splitContainer1.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar3)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar4)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -248,6 +314,10 @@
 		private System.Windows.Forms.ToolStripMenuItem quadrocopterToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem connectToQuadrocopterViaCOMToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem disconnectToolStripMenuItem;
+		public System.Windows.Forms.TrackBar trackBar1;
+		public System.Windows.Forms.TrackBar trackBar2;
+		public System.Windows.Forms.TrackBar trackBar3;
+		public System.Windows.Forms.TrackBar trackBar4;
 
 	}
 }

@@ -108,14 +108,32 @@ namespace Simulator {
 		}
 
 		
-		SerialPort	comPort;
-		Thread		thread;
-
-
 
         void listBox1_Click(object sender, System.EventArgs e)
         {
             quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopters[listBox1.SelectedIndex];
         }
+
+
+
+		private void connectToQuadrocopterViaCOMToolStripMenuItem_Click ( object sender, EventArgs e )
+		{
+			game.GetService<World>().quadrocopters[0].RunCommunicationProtocol();
+		}
+
+		private void disconnectToolStripMenuItem_Click ( object sender, EventArgs e )
+		{
+			game.GetService<World>().quadrocopters[0].StopCommunicationProtocol();
+		}
+
+		private void trackBar1_Scroll ( object sender, EventArgs e )
+		{
+			TrackBar trackBar =  (TrackBar)sender;
+			if (trackBar==trackBar1) game.GetService<World>().quadrocopters[0].Rotor1 = trackBar.Value;
+			if (trackBar==trackBar2) game.GetService<World>().quadrocopters[0].Rotor2 = trackBar.Value;
+			if (trackBar==trackBar3) game.GetService<World>().quadrocopters[0].Rotor3 = trackBar.Value;
+			if (trackBar==trackBar4) game.GetService<World>().quadrocopters[0].Rotor4 = trackBar.Value;
+		}
+
 	}
 }

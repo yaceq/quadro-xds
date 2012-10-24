@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using System.Threading;
 using BEPUphysics;
 using BEPUphysics.Collidables;
 using BEPUphysics.DataStructures;
@@ -17,7 +18,9 @@ using BEPUphysicsDrawer.Models;
 using BEPUphysics.Entities.Prefabs;
 using BEPUphysics.EntityStateManagement;
 using BEPUphysics.PositionUpdating;
+using Forms = System.Windows.Forms;
 //using ViconDataStreamSDK.DotNET;
+using System.IO.Ports;
 using System.ComponentModel;
 using Misc;
 
@@ -27,6 +30,11 @@ namespace Simulator {
 	public class Quadrocopter {
 
 		[Category("Tracking")]	public bool			TrackObject { set; get; }
+
+		[Category("Motors")]	public int			Rotor1 { set; get; }
+		[Category("Motors")]	public int			Rotor2 { set; get; }
+		[Category("Motors")]	public int			Rotor3 { set; get; }
+		[Category("Motors")]	public int			Rotor4 { set; get; }
         public string Name { protected set; get; }
 
 		Model	frame;
@@ -103,6 +111,60 @@ namespace Simulator {
 		}
 		
 
+		Thread  commThread;
+		bool	commAbortRequest = false;
+		SerialPort 	port;
+
+
+		public void RunCommunicationProtocol ()
+		{
+			commAbortRequest = false;
+			commThread = new Thread( CommunicationThreadFunc );
+			commThread.Start();
+		}
+
+		public void StopCommunicationProtocol ()
+		{
+			commAbortRequest = true;
+		}
+
+
+		void CommunicationThreadFunc ()
+		{
+			Console.WriteLine("Communication thread started.");
+
+			try {
+
+				var cfg = game.GetService<Settings>().Configuration;
+
+				Console.WriteLine("Port " + cfg.Port);
+
+				port = new SerialPort( cfg.Port, 9600 );
+				port.ReadTimeout = SerialPort.InfiniteTimeout;
+				port.Open();
+
+				Console.WriteLine("Opened.");
+
+				byte[] buf = new byte[4];
+
+				while (!commAbortRequest) {
+					buf[0] = (byte)Rotor1;
+					buf[1] = (byte)Rotor2;
+					buf[2] = (byte)Rotor3;
+					buf[3] = (byte)Rotor4;
+					port.Write( buf, 0, 4 );
+				}
+
+				Thread.Sleep(200);
+
+			} catch (Exception ex) {
+				Forms.MessageBox.Show( ex.Message );
+				commAbortRequest = true;
+				return;
+			}
+
+			Console.WriteLine("Communication thread aborted.");
+		}
 
 		//void ApplyForceLL ( ref Box box, float dt, Vector3 point, Vector3 localForce )
 		//{
