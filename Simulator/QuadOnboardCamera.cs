@@ -13,7 +13,7 @@ using Microsoft.Xna.Framework.Media;
 
 namespace Simulator
 {
-    public class QuadOnboardCamera
+    /*public class QuadOnboardCamera
     {
         Vector3 Position { set; get; }
         Vector3 Direction { set; get; }
@@ -42,5 +42,5 @@ namespace Simulator
             proj = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(FOV), 1.0f, 0.01f, 5000.0f);
             camView = Matrix.CreateLookAt(WorldPos, WorldLookAt, WorldUp);
         }
-    }
+    } */
 }
