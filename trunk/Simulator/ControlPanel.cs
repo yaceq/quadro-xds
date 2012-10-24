@@ -30,109 +30,14 @@ namespace Simulator {
 
 			settingsPropertyGrid.SelectedObject = game.GetService<Settings>().Configuration;
 			//quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopter;
-			quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopters_list[0];
+			quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopters[0];
 
-            foreach (var qc in game.GetService<World>().quadrocopters_list)
-            {
-                listBox1.Items.Add(qc.QuadName);
+            foreach (var qc in game.GetService<World>().quadrocopters) {
+                listBox1.Items.Add(qc.Name);
             }
 
 			settingsPropertyGrid.CollapseAllGridItems();
 			quadrocopterPropertyGrid.CollapseAllGridItems();
-
-
-			CustomLabel iLabel = null;
-			Axis PitchRollAxisY = PitchRollDiagram.ChartAreas["ChartArea1"].AxisY;
-			Axis PitchRollAxisX = PitchRollDiagram.ChartAreas["ChartArea1"].AxisX;
-			Axis AltitudeAxisX = AltitudeDiagram.ChartAreas["ChartArea1"].AxisX;
-			Axis AltitudeAxisY = AltitudeDiagram.ChartAreas["ChartArea1"].AxisY;
-			Axis LinearPhaseAxisX = LinearPhaseDiagram.ChartAreas["ChartArea1"].AxisX;
-			Axis LinearPhaseAxisY = LinearPhaseDiagram.ChartAreas["ChartArea1"].AxisY;
-			Axis AngularPhaseDiagramAxisX = AngularPhaseDiagram.ChartAreas["ChartArea1"].AxisX;
-			Axis AngularPhaseDiagramAxisY = AngularPhaseDiagram.ChartAreas["ChartArea1"].AxisY;
-
-			{
-				iLabel = PitchRollAxisY.CustomLabels.Add(2 * Math.PI + Math.PI / 5, 2 * Math.PI - Math.PI / 5, "2pi");
-				iLabel.GridTicks = GridTickTypes.All;
-				iLabel = PitchRollAxisY.CustomLabels.Add(-2 * Math.PI + Math.PI / 5, -2 * Math.PI - Math.PI / 5, "-2pi");
-				iLabel.GridTicks = GridTickTypes.All;
-
-				iLabel = PitchRollAxisY.CustomLabels.Add(Math.PI - Math.PI / 5, Math.PI + Math.PI / 5, "pi");
-				iLabel.GridTicks = GridTickTypes.All;
-				iLabel = PitchRollAxisY.CustomLabels.Add(-Math.PI + Math.PI / 5, -Math.PI - Math.PI / 5, "-pi");
-				iLabel.GridTicks = GridTickTypes.All;
-
-				iLabel = PitchRollAxisY.CustomLabels.Add(Math.PI / 2 + Math.PI / 5, Math.PI / 2 - Math.PI / 5, "pi/2");
-				iLabel.GridTicks = GridTickTypes.All;
-				iLabel = PitchRollAxisY.CustomLabels.Add(-Math.PI / 2 + Math.PI / 5, -Math.PI / 2 - Math.PI / 5, "-pi/2");
-				iLabel.GridTicks = GridTickTypes.All;
-
-				iLabel = PitchRollAxisY.CustomLabels.Add(Math.PI / 5, -Math.PI / 5, "0");
-				iLabel.GridTicks = GridTickTypes.All;
-
-				PitchRollAxisY.Minimum = -4;
-				PitchRollAxisY.Maximum = 4;
-			}
-			{
-				PitchRollAxisX.Interval = 5;
-				PitchRollAxisX.IsMarksNextToAxis = true;
-				PitchRollAxisX.LabelStyle.Format = "{0.00}";
-				PitchRollAxisX.IsLabelAutoFit = false;
-			}
-			{
-				AltitudeAxisX.Interval = 5;
-				AltitudeAxisX.IsMarksNextToAxis = true;
-				AltitudeAxisX.LabelStyle.Format = "{0.00}";
-				AltitudeAxisX.IsLabelAutoFit = false;
-
-				AltitudeAxisY.IsMarksNextToAxis = true;
-			}
-			{
-				//LinearPhaseAxisX.Minimum = -100;
-				//LinearPhaseAxisX.Maximum = 100;
-				//LinearPhaseAxisY.Minimum = -100;
-				//LinearPhaseAxisY.Maximum = 100;
-
-				LinearPhaseAxisX.LabelStyle.Format = "{0.00}";
-				LinearPhaseAxisY.LabelStyle.Format = "{0.00}";
-
-				LinearPhaseAxisX.IsLabelAutoFit = false;
-				LinearPhaseAxisY.IsLabelAutoFit = false;
-			}
-			{
-				AngularPhaseDiagramAxisX.Minimum = -Math.PI;
-				AngularPhaseDiagramAxisX.Maximum = Math.PI;
-				AngularPhaseDiagramAxisY.Minimum = -Math.PI;
-				AngularPhaseDiagramAxisY.Maximum = Math.PI;
-
-				AngularPhaseDiagramAxisX.IsMarginVisible = true;
-				AngularPhaseDiagramAxisY.IsMarginVisible = true;
-
-				iLabel = AngularPhaseDiagramAxisX.CustomLabels.Add(Math.PI - Math.PI / 5, Math.PI + Math.PI / 5, "pi");
-				iLabel.GridTicks = GridTickTypes.All;
-				iLabel = AngularPhaseDiagramAxisX.CustomLabels.Add(-Math.PI + Math.PI / 5, -Math.PI - Math.PI / 5, "-pi");
-				iLabel.GridTicks = GridTickTypes.All;
-
-				iLabel = AngularPhaseDiagramAxisX.CustomLabels.Add(Math.PI / 2 + Math.PI / 5, Math.PI / 2 - Math.PI / 5, "pi/2");
-				iLabel.GridTicks = GridTickTypes.All;
-				iLabel = AngularPhaseDiagramAxisX.CustomLabels.Add(-Math.PI / 2 + Math.PI / 5, -Math.PI / 2 - Math.PI / 5, "-pi/2");
-				iLabel.GridTicks = GridTickTypes.All;
-
-				iLabel = AngularPhaseDiagramAxisY.CustomLabels.Add(Math.PI - Math.PI / 5, Math.PI + Math.PI / 5, "pi");
-				iLabel.GridTicks = GridTickTypes.All;
-				iLabel = AngularPhaseDiagramAxisY.CustomLabels.Add(-Math.PI + Math.PI / 5, -Math.PI - Math.PI / 5, "-pi");
-				iLabel.GridTicks = GridTickTypes.All;
-
-				iLabel = AngularPhaseDiagramAxisY.CustomLabels.Add(Math.PI / 2 + Math.PI / 5, Math.PI / 2 - Math.PI / 5, "pi/2");
-				iLabel.GridTicks = GridTickTypes.All;
-				iLabel = AngularPhaseDiagramAxisY.CustomLabels.Add(-Math.PI / 2 + Math.PI / 5, -Math.PI / 2 - Math.PI / 5, "-pi/2");
-				iLabel.GridTicks = GridTickTypes.All;
-
-				iLabel = AngularPhaseDiagramAxisX.CustomLabels.Add(Math.PI / 5, -Math.PI / 5, "0");
-				iLabel.GridTicks = GridTickTypes.All;
-				iLabel = AngularPhaseDiagramAxisY.CustomLabels.Add(Math.PI / 5, -Math.PI / 5, "0");
-				iLabel.GridTicks = GridTickTypes.All;
-			}
 		}
 
 		
@@ -143,52 +48,6 @@ namespace Simulator {
 		}
 
 
-		private void timer1_Tick ( object sender, EventArgs e )
-		{
-			var world = game.GetService<World>();
-
-			float yaw = 0, pitch = 0, roll = 0;
-
-			ToAngles(world.quadrocopter.Transform, out yaw, out pitch, out roll);
-
-			PitchRollDiagram.Series["Yaw"].Points.AddXY(world.worldTime.TotalGameTime.TotalSeconds, yaw);
-			PitchRollDiagram.Series["Pitch"].Points.AddXY(world.worldTime.TotalGameTime.TotalSeconds, pitch);
-			PitchRollDiagram.Series["Roll"].Points.AddXY(world.worldTime.TotalGameTime.TotalSeconds, roll);
-
-            AngularPhaseDiagram.Series["AngularPhase"].Points.AddXY(pitch, roll);
-
-            LinearPhaseDiagram.Series["LinearPhase"].Points.AddXY(world.quadrocopter.Position.X, -world.quadrocopter.Position.Z);
-			AltitudeDiagram.Series["Altitude"].Points.AddXY(world.worldTime.TotalGameTime.TotalSeconds, world.quadrocopter.Position.Y);
-
-            if (AltitudeDiagram.Series["Altitude"].Points.Count > 500)
-			{
-                AltitudeDiagram.Series["Altitude"].Points.RemoveAt(0);
-                LinearPhaseDiagram.Series["LinearPhase"].Points.RemoveAt(0);
-
-				PitchRollDiagram.Series["Yaw"].Points.RemoveAt(0);
-				PitchRollDiagram.Series["Pitch"].Points.RemoveAt(0);
-				PitchRollDiagram.Series["Roll"].Points.RemoveAt(0);
-
-                AngularPhaseDiagram.Series["AngularPhase"].Points.RemoveAt(0);
-
-
-				AltitudeDiagram.ResetAutoValues();
-				LinearPhaseDiagram.ResetAutoValues();
-				PitchRollDiagram.ResetAutoValues();
-				AngularPhaseDiagram.ResetAutoValues();
-			}
-
-
-			Axis PitchRollAxisX = PitchRollDiagram.ChartAreas["ChartArea1"].AxisX;
-			PitchRollAxisX.Minimum = world.worldTime.TotalGameTime.TotalSeconds - 30.0;
-			PitchRollAxisX.Maximum = world.worldTime.TotalGameTime.TotalSeconds + 2.0f;
-			PitchRollDiagram.Invalidate();
-			Axis AltitudeDiagramAxisX = AltitudeDiagram.ChartAreas["ChartArea1"].AxisX;
-			AltitudeDiagramAxisX.Minimum = world.worldTime.TotalGameTime.TotalSeconds - 30.0;
-			AltitudeDiagramAxisX.Maximum = world.worldTime.TotalGameTime.TotalSeconds + 2.0f;
-			AltitudeDiagram.Invalidate();
-		}
-
 
 		private void connectToTrackerToolStripMenuItem_Click ( object sender, EventArgs e )
 		{
@@ -196,11 +55,15 @@ namespace Simulator {
 			world.ConnectTracker();
 		}
 
+
+
 		private void disconnectTrackerToolStripMenuItem_Click ( object sender, EventArgs e )
 		{
 			var world = game.GetService<World>();
 			world.ConnectTracker();
 		}
+
+
 
 		void ToAngles(Matrix mat, out float yaw, out float pitch, out float roll)
 		{
@@ -244,13 +107,15 @@ namespace Simulator {
 			roll = angle_z;
 		}
 
+		
 		SerialPort	comPort;
 		Thread		thread;
 
 
+
         void listBox1_Click(object sender, System.EventArgs e)
         {
-            quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopters_list[listBox1.SelectedIndex];
+            quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopters[listBox1.SelectedIndex];
         }
 	}
 }

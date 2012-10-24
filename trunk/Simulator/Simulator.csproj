@@ -138,11 +138,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Quadrocopter.cs" />
-    <Compile Include="QuadOnboardCamera.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SimulatorGame.cs" />
     <Compile Include="Tracker.cs" />
-    <Compile Include="World.Aero.cs" />
     <Compile Include="World.cs" />
   </ItemGroup>
   <ItemGroup>
