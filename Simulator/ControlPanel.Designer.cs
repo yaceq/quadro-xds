@@ -26,20 +26,6 @@
 		private void InitializeComponent ()
 		{
 			this.components = new System.ComponentModel.Container();
-			System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea5 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-			System.Windows.Forms.DataVisualization.Charting.Legend legend5 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-			System.Windows.Forms.DataVisualization.Charting.Series series7 = new System.Windows.Forms.DataVisualization.Charting.Series();
-			System.Windows.Forms.DataVisualization.Charting.Series series8 = new System.Windows.Forms.DataVisualization.Charting.Series();
-			System.Windows.Forms.DataVisualization.Charting.Series series9 = new System.Windows.Forms.DataVisualization.Charting.Series();
-			System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea6 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-			System.Windows.Forms.DataVisualization.Charting.Legend legend6 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-			System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
-			System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea7 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-			System.Windows.Forms.DataVisualization.Charting.Legend legend7 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-			System.Windows.Forms.DataVisualization.Charting.Series series11 = new System.Windows.Forms.DataVisualization.Charting.Series();
-			System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea8 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-			System.Windows.Forms.DataVisualization.Charting.Legend legend8 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-			System.Windows.Forms.DataVisualization.Charting.Series series12 = new System.Windows.Forms.DataVisualization.Charting.Series();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.simulatorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.addQuadrocopterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -52,11 +38,6 @@
 			this.quadrocopterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.connectToQuadrocopterViaCOMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.disconnectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-			this.PitchRollDiagram = new System.Windows.Forms.DataVisualization.Charting.Chart();
-			this.AngularPhaseDiagram = new System.Windows.Forms.DataVisualization.Charting.Chart();
-			this.AltitudeDiagram = new System.Windows.Forms.DataVisualization.Charting.Chart();
-			this.LinearPhaseDiagram = new System.Windows.Forms.DataVisualization.Charting.Chart();
 			this.splitter1 = new System.Windows.Forms.Splitter();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -64,19 +45,11 @@
 			this.settingsPropertyGrid = new System.Windows.Forms.PropertyGrid();
 			this.quadrocopterPropertyGrid = new System.Windows.Forms.PropertyGrid();
 			this.listBox1 = new System.Windows.Forms.ListBox();
-			this.panel1 = new System.Windows.Forms.Panel();
-			this.textBox1 = new System.Windows.Forms.TextBox();
 			this.menuStrip1.SuspendLayout();
-			this.tableLayoutPanel1.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.PitchRollDiagram)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.AngularPhaseDiagram)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.AltitudeDiagram)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.LinearPhaseDiagram)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
 			this.splitContainer1.SuspendLayout();
-			this.panel1.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// menuStrip1
@@ -86,7 +59,7 @@
             this.quadrocopterToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(1351, 24);
+			this.menuStrip1.Size = new System.Drawing.Size(424, 24);
 			this.menuStrip1.TabIndex = 0;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
@@ -168,127 +141,19 @@
 			this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(259, 22);
 			this.disconnectToolStripMenuItem.Text = "Disconnect";
 			// 
-			// tableLayoutPanel1
-			// 
-			this.tableLayoutPanel1.ColumnCount = 2;
-			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-			this.tableLayoutPanel1.Controls.Add(this.PitchRollDiagram, 1, 1);
-			this.tableLayoutPanel1.Controls.Add(this.AngularPhaseDiagram, 0, 1);
-			this.tableLayoutPanel1.Controls.Add(this.AltitudeDiagram, 1, 0);
-			this.tableLayoutPanel1.Controls.Add(this.LinearPhaseDiagram, 0, 0);
-			this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.tableLayoutPanel1.Location = new System.Drawing.Point(317, 24);
-			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-			this.tableLayoutPanel1.RowCount = 2;
-			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-			this.tableLayoutPanel1.Size = new System.Drawing.Size(746, 659);
-			this.tableLayoutPanel1.TabIndex = 3;
-			// 
-			// PitchRollDiagram
-			// 
-			chartArea5.Name = "ChartArea1";
-			this.PitchRollDiagram.ChartAreas.Add(chartArea5);
-			this.PitchRollDiagram.Dock = System.Windows.Forms.DockStyle.Fill;
-			legend5.Name = "Legend1";
-			this.PitchRollDiagram.Legends.Add(legend5);
-			this.PitchRollDiagram.Location = new System.Drawing.Point(376, 332);
-			this.PitchRollDiagram.Name = "PitchRollDiagram";
-			series7.ChartArea = "ChartArea1";
-			series7.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-			series7.Legend = "Legend1";
-			series7.Name = "Yaw";
-			series8.ChartArea = "ChartArea1";
-			series8.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-			series8.Legend = "Legend1";
-			series8.Name = "Pitch";
-			series9.ChartArea = "ChartArea1";
-			series9.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-			series9.Legend = "Legend1";
-			series9.Name = "Roll";
-			this.PitchRollDiagram.Series.Add(series7);
-			this.PitchRollDiagram.Series.Add(series8);
-			this.PitchRollDiagram.Series.Add(series9);
-			this.PitchRollDiagram.Size = new System.Drawing.Size(367, 324);
-			this.PitchRollDiagram.TabIndex = 3;
-			this.PitchRollDiagram.Text = "chart4";
-			// 
-			// AngularPhaseDiagram
-			// 
-			chartArea6.Name = "ChartArea1";
-			this.AngularPhaseDiagram.ChartAreas.Add(chartArea6);
-			this.AngularPhaseDiagram.Dock = System.Windows.Forms.DockStyle.Fill;
-			legend6.Name = "Legend1";
-			this.AngularPhaseDiagram.Legends.Add(legend6);
-			this.AngularPhaseDiagram.Location = new System.Drawing.Point(3, 332);
-			this.AngularPhaseDiagram.Name = "AngularPhaseDiagram";
-			series10.ChartArea = "ChartArea1";
-			series10.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-			series10.Legend = "Legend1";
-			series10.Name = "AngularPhase";
-			this.AngularPhaseDiagram.Series.Add(series10);
-			this.AngularPhaseDiagram.Size = new System.Drawing.Size(367, 324);
-			this.AngularPhaseDiagram.TabIndex = 2;
-			this.AngularPhaseDiagram.Text = "chart3";
-			// 
-			// AltitudeDiagram
-			// 
-			chartArea7.AxisY.IsLabelAutoFit = false;
-			chartArea7.Name = "ChartArea1";
-			this.AltitudeDiagram.ChartAreas.Add(chartArea7);
-			this.AltitudeDiagram.Dock = System.Windows.Forms.DockStyle.Fill;
-			legend7.Name = "Legend1";
-			this.AltitudeDiagram.Legends.Add(legend7);
-			this.AltitudeDiagram.Location = new System.Drawing.Point(376, 3);
-			this.AltitudeDiagram.Name = "AltitudeDiagram";
-			series11.ChartArea = "ChartArea1";
-			series11.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-			series11.Legend = "Legend1";
-			series11.Name = "Altitude";
-			this.AltitudeDiagram.Series.Add(series11);
-			this.AltitudeDiagram.Size = new System.Drawing.Size(367, 323);
-			this.AltitudeDiagram.TabIndex = 1;
-			this.AltitudeDiagram.Text = "chart3";
-			// 
-			// LinearPhaseDiagram
-			// 
-			chartArea8.Name = "ChartArea1";
-			this.LinearPhaseDiagram.ChartAreas.Add(chartArea8);
-			this.LinearPhaseDiagram.Dock = System.Windows.Forms.DockStyle.Fill;
-			legend8.Name = "Legend1";
-			this.LinearPhaseDiagram.Legends.Add(legend8);
-			this.LinearPhaseDiagram.Location = new System.Drawing.Point(3, 3);
-			this.LinearPhaseDiagram.Name = "LinearPhaseDiagram";
-			series12.ChartArea = "ChartArea1";
-			series12.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-			series12.IsVisibleInLegend = false;
-			series12.Legend = "Legend1";
-			series12.Name = "LinearPhase";
-			this.LinearPhaseDiagram.Series.Add(series12);
-			this.LinearPhaseDiagram.Size = new System.Drawing.Size(367, 323);
-			this.LinearPhaseDiagram.TabIndex = 0;
-			this.LinearPhaseDiagram.Text = "chart4";
-			// 
 			// splitter1
 			// 
 			this.splitter1.Location = new System.Drawing.Point(317, 24);
 			this.splitter1.Name = "splitter1";
-			this.splitter1.Size = new System.Drawing.Size(10, 659);
+			this.splitter1.Size = new System.Drawing.Size(10, 672);
 			this.splitter1.TabIndex = 4;
 			this.splitter1.TabStop = false;
 			// 
-			// timer1
-			// 
-			this.timer1.Enabled = true;
-			this.timer1.Interval = 50;
-			this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-			// 
 			// statusStrip1
 			// 
-			this.statusStrip1.Location = new System.Drawing.Point(0, 683);
+			this.statusStrip1.Location = new System.Drawing.Point(0, 696);
 			this.statusStrip1.Name = "statusStrip1";
-			this.statusStrip1.Size = new System.Drawing.Size(1351, 22);
+			this.statusStrip1.Size = new System.Drawing.Size(424, 22);
 			this.statusStrip1.TabIndex = 7;
 			this.statusStrip1.Text = "statusStrip1";
 			// 
@@ -307,8 +172,8 @@
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.quadrocopterPropertyGrid);
 			this.splitContainer1.Panel2.Controls.Add(this.listBox1);
-			this.splitContainer1.Size = new System.Drawing.Size(317, 659);
-			this.splitContainer1.SplitterDistance = 296;
+			this.splitContainer1.Size = new System.Drawing.Size(317, 672);
+			this.splitContainer1.SplitterDistance = 301;
 			this.splitContainer1.TabIndex = 8;
 			// 
 			// settingsPropertyGrid
@@ -317,7 +182,7 @@
 			this.settingsPropertyGrid.HelpVisible = false;
 			this.settingsPropertyGrid.Location = new System.Drawing.Point(0, 0);
 			this.settingsPropertyGrid.Name = "settingsPropertyGrid";
-			this.settingsPropertyGrid.Size = new System.Drawing.Size(317, 296);
+			this.settingsPropertyGrid.Size = new System.Drawing.Size(317, 301);
 			this.settingsPropertyGrid.TabIndex = 2;
 			// 
 			// quadrocopterPropertyGrid
@@ -326,47 +191,26 @@
 			this.quadrocopterPropertyGrid.HelpVisible = false;
 			this.quadrocopterPropertyGrid.Location = new System.Drawing.Point(0, 0);
 			this.quadrocopterPropertyGrid.Name = "quadrocopterPropertyGrid";
-			this.quadrocopterPropertyGrid.Size = new System.Drawing.Size(317, 277);
+			this.quadrocopterPropertyGrid.Size = new System.Drawing.Size(317, 285);
 			this.quadrocopterPropertyGrid.TabIndex = 7;
 			// 
 			// listBox1
 			// 
 			this.listBox1.Dock = System.Windows.Forms.DockStyle.Bottom;
 			this.listBox1.FormattingEnabled = true;
-			this.listBox1.Location = new System.Drawing.Point(0, 277);
+			this.listBox1.Location = new System.Drawing.Point(0, 285);
 			this.listBox1.Name = "listBox1";
 			this.listBox1.Size = new System.Drawing.Size(317, 82);
 			this.listBox1.TabIndex = 4;
-            this.listBox1.Click += new System.EventHandler(listBox1_Click);
-			// 
-			// panel1
-			// 
-			this.panel1.Controls.Add(this.textBox1);
-			this.panel1.Dock = System.Windows.Forms.DockStyle.Right;
-			this.panel1.Location = new System.Drawing.Point(1063, 24);
-			this.panel1.Name = "panel1";
-			this.panel1.Size = new System.Drawing.Size(288, 659);
-			this.panel1.TabIndex = 9;
-			// 
-			// textBox1
-			// 
-			this.textBox1.BackColor = System.Drawing.Color.Teal;
-			this.textBox1.ForeColor = System.Drawing.Color.White;
-			this.textBox1.Location = new System.Drawing.Point(8, 148);
-			this.textBox1.Multiline = true;
-			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(268, 494);
-			this.textBox1.TabIndex = 0;
+			this.listBox1.Click += new System.EventHandler(this.listBox1_Click);
 			// 
 			// ControlPanel
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1351, 705);
+			this.ClientSize = new System.Drawing.Size(424, 718);
 			this.Controls.Add(this.splitter1);
-			this.Controls.Add(this.tableLayoutPanel1);
 			this.Controls.Add(this.splitContainer1);
-			this.Controls.Add(this.panel1);
 			this.Controls.Add(this.menuStrip1);
 			this.Controls.Add(this.statusStrip1);
 			this.MainMenuStrip = this.menuStrip1;
@@ -374,17 +218,10 @@
 			this.Text = "ControlPanel";
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();
-			this.tableLayoutPanel1.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.PitchRollDiagram)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.AngularPhaseDiagram)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.AltitudeDiagram)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.LinearPhaseDiagram)).EndInit();
 			this.splitContainer1.Panel1.ResumeLayout(false);
 			this.splitContainer1.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
 			this.splitContainer1.ResumeLayout(false);
-			this.panel1.ResumeLayout(false);
-			this.panel1.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -400,11 +237,6 @@
 		private System.Windows.Forms.ToolStripMenuItem connectToTrackerToolStripMenuItem;
 		private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
 		private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
-		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-		public  System.Windows.Forms.DataVisualization.Charting.Chart PitchRollDiagram;
-		public  System.Windows.Forms.DataVisualization.Charting.Chart AngularPhaseDiagram;
-		public  System.Windows.Forms.DataVisualization.Charting.Chart AltitudeDiagram;
-		public  System.Windows.Forms.DataVisualization.Charting.Chart LinearPhaseDiagram;
 		private System.Windows.Forms.Splitter splitter1;
 		private System.Windows.Forms.Timer timer1;
 		private System.Windows.Forms.ToolStripMenuItem disconnectTrackerToolStripMenuItem;
@@ -416,8 +248,6 @@
 		private System.Windows.Forms.ToolStripMenuItem quadrocopterToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem connectToQuadrocopterViaCOMToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem disconnectToolStripMenuItem;
-		private System.Windows.Forms.Panel panel1;
-		private System.Windows.Forms.TextBox textBox1;
 
 	}
 }

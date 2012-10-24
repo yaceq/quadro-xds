@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using XnaInput = Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using System.Windows;
 using System.Windows.Forms;
@@ -39,11 +40,15 @@ namespace Simulator {
 
 		public	Quadrocopter quadrocopter;
 
-		public	List<Quadrocopter> quadrocopters_list;
+		public	List<Quadrocopter> quadrocopters;
 
 		public Tracker	Tracker;
 
 		public AudioListener	Listener;
+
+		float yaw	= 45;
+		float pitch = 45;
+		float dist  = 3;
 
 
 		/// <summary>
@@ -90,9 +95,7 @@ namespace Simulator {
 
 			Listener	=	new AudioListener();
 
-            quadrocopters_list = new List<Quadrocopter>() { new Quadrocopter(Game, this, Vector3.Zero, "Quad1") };//, new Quadrocopter(Game, this, Vector3.Zero, "Quad2"), new Quadrocopter(Game, this, Vector3.Zero, "Quad3") };
-
-			quadrocopter = quadrocopters_list[0];
+            quadrocopters = new List<Quadrocopter>() { new Quadrocopter(Game, this, Vector3.Zero, "q1") };
 
 			base.Initialize();
 		}
@@ -157,30 +160,13 @@ namespace Simulator {
 		}
 
 
-		/*public Vector3	Get3DxTranslation () 
-		{
-			if (sensor==null) return Vector3.Zero;
-
-            TDx.TDxInput.Vector3D translation;
-            translation = sensor.Translation;
-            return new Vector3( (float)translation.X, (float)translation.Y, (float)translation.Z );
-		}
-
-
-		public Vector3	Get3DxRotation () 
-		{
-			if (sensor==null) return Vector3.Zero;
-
-            TDx.TDxInput.AngleAxis rotation;
-            rotation = sensor.Rotation;
-            return new Vector3( (float)rotation.X, (float)rotation.Y, (float)rotation.Z );
-		} */
-
 
 		public Vector3 Mouse3DTranslation	{ get; protected set; }
 		public Vector3 Mouse3DRotationAxis	{ get; protected set; }
 		public float   Mouse3DRotationAngle	{ get; protected set; }
 
+
+		MouseState oldMouseState;
 
 		/// <summary>
 		/// Allows the game component to update itself.
@@ -188,9 +174,34 @@ namespace Simulator {
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		public override void Update ( GameTime gameTime )
 		{
-			// TODO: Add your update code here
 			var ds = Game.GetService<DebugStrings>();
 			float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+			Form form = (Form)Form.FromHandle( Game.Window.Handle );
+			MouseState mouseState = Mouse.GetState();
+
+			if ( form.Focused ) { 
+				
+				if ( mouseState.LeftButton == XnaInput.ButtonState.Pressed ) {
+					yaw   += 0.5f * (oldMouseState.X - mouseState.X);
+					pitch -= 0.5f * (oldMouseState.Y - mouseState.Y);
+				}
+				
+				if ( mouseState.RightButton == XnaInput.ButtonState.Pressed ) {
+					dist *= (float)Math.Pow( 1.007f, oldMouseState.Y - mouseState.Y );
+				}
+			}
+
+			oldMouseState = mouseState;
+
+
+			if (Tracker!=null) {
+				ds.Add("Tracker enabled", Color.Lime);
+			} else {
+				ds.Add("Tracker disabled", Color.Red);
+			}
+
+
 
 			if (sensor!=null) {
 				var translation = sensor.Translation;
@@ -207,28 +218,27 @@ namespace Simulator {
 			}
 
 
-			//quadrocopter.Update( dt );
-			foreach (var quadrocop in quadrocopters_list)
-			{
+
+			foreach (var quadrocop in quadrocopters) {
 				quadrocop.Update(dt);
 			}
+
 
 			space.Update( (float)gameTime.ElapsedGameTime.TotalSeconds );
 			drawer.Update();
 
 			worldTime = gameTime;
 
-
-			UpdateAerodynamicForces( dt );
-
 			base.Update( gameTime );
 		}
 
 
 
-
 		Matrix	currentViewMatrix;
 		bool	firstFrame = true;
+
+
+
 
 		/// <summary>
 		/// Draws stuff
@@ -243,28 +253,10 @@ namespace Simulator {
 
 			Game.GraphicsDevice.ResetDeviceState();
 
-			var proj = Matrix.CreatePerspectiveFieldOfView( MathHelper.ToRadians(cfg.Fov), Game.GraphicsDevice.Viewport.AspectRatio, 0.1f, 5000.0f );
-			var view = Matrix.CreateLookAt( 2*(Vector3.Up + Vector3.Backward + Vector3.Right), Vector3.Zero, Vector3.Up );
+			var rot  = Matrix.CreateFromYawPitchRoll( MathHelper.ToRadians( yaw ), MathHelper.ToRadians( pitch ), 0 );
+			var proj = Matrix.CreatePerspectiveFieldOfView( MathHelper.ToRadians(cfg.Fov), Game.GraphicsDevice.Viewport.AspectRatio, 0.01f, 500.0f );
+			var view = Matrix.CreateLookAt( rot.Forward * dist, Vector3.Zero, Vector3.Up );
 
-			if (cfg.CameraMode==Configuration.CameraModes.ViewFromPoint) {
-				view = Matrix.CreateLookAt( cfg.PointOfView, quadrocopter.Position, Vector3.Up );
-			}
-
-			if (cfg.CameraMode==Configuration.CameraModes.BoundToQuadrocopter) {
-				var fw = quadrocopter.Transform.Forward;
-				var	up = quadrocopter.Transform.Up;
-				var p  = quadrocopter.Position + up * 0.3f - fw;
-				if (p.Y < 0.1f ) p.Y = 0.1f;
-				view = Matrix.CreateLookAt( p, p + fw, Vector3.Up );
-			}
-
-			if (cfg.CameraMode==Configuration.CameraModes.BoundToQuadrocopterHorison) {
-				var fw = quadrocopter.Transform.Forward;
-				var	up = quadrocopter.Transform.Up;
-				var p  = quadrocopter.Position + up * 0.3f - fw;
-				if (p.Y < 0.1f ) p.Y = 0.1f;
-				view = Matrix.CreateLookAt( p, p + fw, up );
-			}
 
 			if (firstFrame) {
 				currentViewMatrix = view;
@@ -283,13 +275,14 @@ namespace Simulator {
             Game.GraphicsDevice.SetRenderTarget(null);
 
 			//quadrocopter.Draw( dt, view, proj );
-			foreach (var quadrocop in quadrocopters_list)
-			{
+			foreach (var quadrocop in quadrocopters) {
 				quadrocop.Draw(dt, view, proj);
 			}
 
-			SimulatorGame.DrawModel( worldModel, Matrix.Identity, view, proj );
 
+			dr.DrawGrid(8);
+
+		
 
 			if ( cfg.ShowBodies ) {
 				drawer.Draw( view, proj );

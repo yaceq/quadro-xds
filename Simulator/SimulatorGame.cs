@@ -127,11 +127,7 @@ namespace Simulator {
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw ( GameTime gameTime )
 		{
-			GraphicsDevice.Clear( Color.CornflowerBlue );
-
-			// TODO: Add your drawing code here
-
-			//var ds = this.GetService<DebugStrings>();
+			GraphicsDevice.Clear( new Color(45,65,85) );
 
 			base.Draw( gameTime );
 		}
