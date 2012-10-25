@@ -126,6 +126,7 @@ namespace Simulator {
 		public void StopCommunicationProtocol ()
 		{
 			commAbortRequest = true;
+			//commThread.
 		}
 
 
@@ -139,23 +140,32 @@ namespace Simulator {
 
 				Console.WriteLine("Port " + cfg.Port);
 
-				port = new SerialPort( cfg.Port, 9600 );
+				port = new SerialPort( cfg.Port, cfg.BaudRate );
 				port.ReadTimeout = SerialPort.InfiniteTimeout;
 				port.Open();
 
 				Console.WriteLine("Opened.");
 
-				byte[] buf = new byte[4];
+				//byte[] buf = new byte[7];
+				string s;
 
 				while (!commAbortRequest) {
-					buf[0] = (byte)Rotor1;
-					buf[1] = (byte)Rotor2;
-					buf[2] = (byte)Rotor3;
-					buf[3] = (byte)Rotor4;
-					port.Write( buf, 0, 4 );
-				}
 
-				Thread.Sleep(200);
+					s = string.Format("X{0,2:X2}{1,2:X2}{2,2:X2}{3,2:X2}\n", (byte)Rotor1, (byte)Rotor2, (byte)Rotor3, (byte)Rotor4 );
+
+					port.Write( s );
+					/*buf[0] = (byte)'X';
+					buf[1] = (byte)Rotor1;
+					buf[2] = (byte)Rotor2;
+					buf[3] = (byte)Rotor3;
+					buf[4] = (byte)Rotor4;
+					buf[5] = (byte)'\n';
+					port.Write( buf, 0, buf.Length );*/
+
+					//string ack = port.ReadLine();
+					//Console.WriteLine(ack);
+					Thread.Sleep(50);
+				}
 
 			} catch (Exception ex) {
 				Forms.MessageBox.Show( ex.Message );

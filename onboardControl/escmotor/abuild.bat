@@ -133,7 +133,7 @@ REM     Find all external libraries, and compile a list of include paths...
 
 if !abuild_nolibs! == false (
 	set abuild_include_paths=
-	set abuild_include_paths_root=!arduino_path!\hardware\libraries
+	set abuild_include_paths_root=!arduino_path!\libraries
 
 	REM HACK: for some reason, I am unable to get for work with both /R and /D, when it needs to expand
 	REM an environment variable for the /R root..? hardcoding the path works... using pushd/popd as a workaround

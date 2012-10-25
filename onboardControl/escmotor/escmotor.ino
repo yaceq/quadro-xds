@@ -32,17 +32,21 @@ void setupBlueToothConnection()
   return;
 #else
   Serial.println("BT setting up...");
+  
   pinMode(RxD, INPUT);
   pinMode(TxD, OUTPUT);
   blueToothSerial.begin(38400); //Set BluetoothBee BaudRate to default baud rate 38400
   blueToothSerial.print("\r\n+STWMOD=0\r\n"); //set the bluetooth work in slave mode
   blueToothSerial.print("\r\n+STNA=SeeedBTSlave\r\n"); //set the bluetooth name as "SeeedBTSlave"
+
   blueToothSerial.print("\r\n+STOAUT=1\r\n"); // Permit Paired device to connect me
   blueToothSerial.print("\r\n+STAUTO=0\r\n"); // Auto-connection should be forbidden here
   delay(2000); // This delay is required.
+
   blueToothSerial.print("\r\n+INQ=1\r\n"); //make the slave bluetooth inquirable 
   Serial.println("The slave bluetooth is inquirable!");
   delay(2000); // This delay is required.
+
   blueToothSerial.flush();
   Serial.println("Done.");
 #endif  
@@ -51,52 +55,48 @@ void setupBlueToothConnection()
 
 String recvStr = String("");
 
+
+byte hex2byte ( byte a, byte b ) {
+  byte h=0, l = 0;
+  if (a>=0x30 && a<=0x39) h = a - 0x30;
+  if (a>=0x41 && a<=0x46) h = a - 0x41 + 0x0A;
+  if (b>=0x30 && b<=0x39) l = b - 0x30;
+  if (b>=0x41 && b<=0x46) l = b - 0x41 + 0x0A;
+  return ((h<<4) | l);
+}
+
 void HandleCommand()
 {
-  if (recvStr.length()==5 && recvStr[0]=='X') {
-    srv1.write(recvStr[1]);
-    srv2.write(recvStr[2]);
-    srv3.write(recvStr[3]);
-    srv4.write(recvStr[4]);
+  Serial.print("CMD");
+  Serial.println(recvStr);
+  if (recvStr.length()==9 && recvStr[0]=='X') {
+    byte r1 = hex2byte( recvStr[1], recvStr[2] );
+    byte r2 = hex2byte( recvStr[3], recvStr[4] );
+    byte r3 = hex2byte( recvStr[5], recvStr[6] );
+    byte r4 = hex2byte( recvStr[7], recvStr[8] );
+    Serial.print("R:");
+    Serial.print(r1, HEX);
+    Serial.print(r2, HEX);
+    Serial.print(r3, HEX);
+    Serial.print(r4, HEX);
+    Serial.println();
+    srv1.write(r1);
+    srv2.write(r2);
+    srv3.write(r3);
+    srv4.write(r4);
   }
 }
 
 
 void loop()
 {
-  while (1) {
+  if (blueToothSerial.available()) {
     byte b = blueToothSerial.read();
     if (b=='\n') {
       HandleCommand();
       recvStr = String("");
+    } else {
+      recvStr += String((char)b);
     }
   }
-  
-  char recvChar;
-  while(1){
-    if(blueToothSerial.available()){//check if there's any data sent from the remote bluetooth shield
-      recvChar = blueToothSerial.read();
-      Serial.print(recvChar);
-    }
-    if(Serial.available()){//check if there's any data sent from the local serial terminal, you can add the other applications here
-      recvChar  = Serial.read();
-      blueToothSerial.print(recvChar);
-    }
-  }
-  return;  
-#ifdef USE_BT
-#else
-  if (Serial.available()>=4) {
-    byte r1 = Serial.read();
-    byte r2 = Serial.read();
-    byte r3 = Serial.read();
-    byte r4 = Serial.read();
-    
-    srv1.write(r1);
-    srv2.write(r2);
-    srv3.write(r3);
-    srv4.write(r4);
-  } 
-#endif  
 }
-
