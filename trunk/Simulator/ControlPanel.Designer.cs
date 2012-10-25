@@ -49,6 +49,7 @@
 			this.trackBar2 = new System.Windows.Forms.TrackBar();
 			this.trackBar3 = new System.Windows.Forms.TrackBar();
 			this.trackBar4 = new System.Windows.Forms.TrackBar();
+			this.connectCOM6ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
@@ -132,7 +133,8 @@
 			// 
 			this.quadrocopterToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.connectToQuadrocopterViaCOMToolStripMenuItem,
-            this.disconnectToolStripMenuItem});
+            this.disconnectToolStripMenuItem,
+            this.connectCOM6ToolStripMenuItem});
 			this.quadrocopterToolStripMenuItem.Name = "quadrocopterToolStripMenuItem";
 			this.quadrocopterToolStripMenuItem.Size = new System.Drawing.Size(93, 20);
 			this.quadrocopterToolStripMenuItem.Text = "Quadrocopter";
@@ -218,49 +220,56 @@
 			// 
 			this.trackBar1.Location = new System.Drawing.Point(333, 27);
 			this.trackBar1.Maximum = 180;
-			this.trackBar1.Minimum = 10;
+			this.trackBar1.Minimum = 20;
 			this.trackBar1.Name = "trackBar1";
 			this.trackBar1.Size = new System.Drawing.Size(166, 45);
 			this.trackBar1.TabIndex = 9;
 			this.trackBar1.TickFrequency = 10;
-			this.trackBar1.Value = 10;
+			this.trackBar1.Value = 20;
 			this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
 			// 
 			// trackBar2
 			// 
 			this.trackBar2.Location = new System.Drawing.Point(333, 78);
 			this.trackBar2.Maximum = 180;
-			this.trackBar2.Minimum = 10;
+			this.trackBar2.Minimum = 20;
 			this.trackBar2.Name = "trackBar2";
 			this.trackBar2.Size = new System.Drawing.Size(166, 45);
 			this.trackBar2.TabIndex = 10;
 			this.trackBar2.TickFrequency = 10;
-			this.trackBar2.Value = 10;
+			this.trackBar2.Value = 20;
 			this.trackBar2.Scroll += new System.EventHandler(this.trackBar1_Scroll);
 			// 
 			// trackBar3
 			// 
 			this.trackBar3.Location = new System.Drawing.Point(333, 129);
 			this.trackBar3.Maximum = 180;
-			this.trackBar3.Minimum = 10;
+			this.trackBar3.Minimum = 20;
 			this.trackBar3.Name = "trackBar3";
 			this.trackBar3.Size = new System.Drawing.Size(166, 45);
 			this.trackBar3.TabIndex = 11;
 			this.trackBar3.TickFrequency = 10;
-			this.trackBar3.Value = 10;
+			this.trackBar3.Value = 20;
 			this.trackBar3.Scroll += new System.EventHandler(this.trackBar1_Scroll);
 			// 
 			// trackBar4
 			// 
 			this.trackBar4.Location = new System.Drawing.Point(333, 180);
 			this.trackBar4.Maximum = 180;
-			this.trackBar4.Minimum = 10;
+			this.trackBar4.Minimum = 20;
 			this.trackBar4.Name = "trackBar4";
 			this.trackBar4.Size = new System.Drawing.Size(166, 45);
 			this.trackBar4.TabIndex = 12;
 			this.trackBar4.TickFrequency = 10;
-			this.trackBar4.Value = 10;
+			this.trackBar4.Value = 20;
 			this.trackBar4.Scroll += new System.EventHandler(this.trackBar1_Scroll);
+			// 
+			// connectCOM6ToolStripMenuItem
+			// 
+			this.connectCOM6ToolStripMenuItem.Name = "connectCOM6ToolStripMenuItem";
+			this.connectCOM6ToolStripMenuItem.Size = new System.Drawing.Size(259, 22);
+			this.connectCOM6ToolStripMenuItem.Text = "Connect COM6";
+			this.connectCOM6ToolStripMenuItem.Click += new System.EventHandler(this.connectCOM6ToolStripMenuItem_Click);
 			// 
 			// ControlPanel
 			// 
@@ -318,6 +327,7 @@
 		public System.Windows.Forms.TrackBar trackBar2;
 		public System.Windows.Forms.TrackBar trackBar3;
 		public System.Windows.Forms.TrackBar trackBar4;
+		private System.Windows.Forms.ToolStripMenuItem connectCOM6ToolStripMenuItem;
 
 	}
 }

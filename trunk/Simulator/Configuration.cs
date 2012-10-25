@@ -24,6 +24,7 @@ namespace Simulator {
 		[Category("Tracker")]			public string		Host { set; get; }
 
 		[Category("Communications")]	public string		Port { set; get; }
+		[Category("Communications")]	public int			BaudRate		 { set; get; }
 
 		[Category("Physics")]			public bool			ShowBodies { set; get; }
 
@@ -46,9 +47,10 @@ namespace Simulator {
 			PreferredBackBufferWidth	=	1280;
 			PreferredBackBufferHeight	=	720;
 
-			Host	=	"192.168.10.1:801";
+			Host		=	"192.168.10.1:801";
 
-			Port	=	"COM6";
+			Port		=	"COM6";
+			BaudRate	=	38400;
 
 			CameraMode	=	CameraModes.ViewFromPoint;
 			Offset		=	Vector3.Backward + Vector3.Up * 0.25f;

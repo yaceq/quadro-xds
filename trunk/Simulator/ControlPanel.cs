@@ -135,5 +135,34 @@ namespace Simulator {
 			if (trackBar==trackBar4) game.GetService<World>().quadrocopters[0].Rotor4 = trackBar.Value;
 		}
 
+
+
+		Thread com6Thread;
+
+		void Com6Func ()
+		{
+			try {
+				Console.WriteLine("Connecting to COM6...");
+				SerialPort	com = new SerialPort("COM6", 9600);
+				com.Open();
+
+				Console.WriteLine("Done.");
+
+				while (true) {
+					char ch = (char)com.ReadChar();
+					Console.Write(ch);
+				}
+
+			} catch ( Exception e ) {
+				MessageBox.Show(e.Message);
+			}
+		}
+
+		private void connectCOM6ToolStripMenuItem_Click ( object sender, EventArgs e )
+		{
+			com6Thread = new Thread( Com6Func );
+			com6Thread.Start();
+		}
+
 	}
 }
