@@ -53,7 +53,7 @@ String recvStr = String("");
 
 void HandleCommand()
 {
-  if (recvStr.length()==5 && recvStr[0]=='X') {
+  if (recvStr[0]=='X') {
     srv1.write(recvStr[1]);
     srv2.write(recvStr[2]);
     srv3.write(recvStr[3]);
