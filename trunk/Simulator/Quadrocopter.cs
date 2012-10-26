@@ -31,10 +31,15 @@ namespace Simulator {
 
 		[Category("Tracking")]	public bool			TrackObject { set; get; }
 
-		[Category("Motors")]	public int			Rotor1 { set; get; }
-		[Category("Motors")]	public int			Rotor2 { set; get; }
-		[Category("Motors")]	public int			Rotor3 { set; get; }
-		[Category("Motors")]	public int			Rotor4 { set; get; }
+
+		[Category("Motors")]	public float	RollK { set; get; }
+		[Category("Motors")]	public float	RollD { set; get; }
+
+
+		[Category("Motors")]	public volatile int	Rotor1;
+		[Category("Motors")]	public volatile int	Rotor2;
+		[Category("Motors")]	public volatile int	Rotor3;
+		[Category("Motors")]	public volatile int	Rotor4;
         public string Name { protected set; get; }
 
 		Model	frame;
@@ -62,11 +67,49 @@ namespace Simulator {
 
 
 
+		float oldYaw, oldPitch, oldRoll;
+
 		public void Update ( float dt )
 		{
-			var dr = game.GetService<DebugRender>();
+			var ds	= game.GetService<DebugStrings>();
+			var cfg = game.GetService<Settings>().Configuration;
+			var dr	= game.GetService<DebugRender>();
 
 			UpdateFromTracker();
+
+			float yaw, pitch, roll;
+
+			worldTransform.ToAngles( out yaw, out pitch, out roll );
+			yaw   = MathHelper.ToDegrees( yaw   );
+			pitch = MathHelper.ToDegrees( pitch );
+			roll  = MathHelper.ToDegrees( roll  );
+
+			float vYaw   = ( yaw   - oldYaw   ) / dt ;
+			float vPitch = ( pitch - oldPitch ) / dt ;
+			float vRoll  = ( roll  - oldRoll  ) / dt ;
+
+			ds.Add(string.Format( "YAW   = {0,10:F3} / {1,10:F3}", yaw   , vYaw   ) );
+			ds.Add(string.Format( "PITCH = {0,10:F3} / {1,10:F3}", pitch , vPitch ) );
+			ds.Add(string.Format( "ROLL  = {0,10:F3} / {1,10:F3}", roll  , vRoll  ) );
+
+			oldYaw   = yaw;
+			oldPitch = pitch;
+			oldRoll  = roll;
+
+			var gps = GamePad.GetState(0);
+
+			float thrust = gps.Triggers.Right;
+
+			float t1	 = thrust;
+			float t2	 = thrust;
+			float t3	 = thrust;
+			float t4	 = thrust;
+
+			Rotor1	=	(int) ( 10 + 169 * t1 );
+			Rotor2	=	(int) ( 10 + 169 * t2 );
+			Rotor3	=	(int) ( 10 + 169 * t3 );
+			Rotor4	=	(int) ( 10 + 169 * t4 );
+			
 		}
 
 
@@ -76,6 +119,7 @@ namespace Simulator {
 			if ( TrackObject && world.Tracker!=null ) {
 				var frame = world.Tracker.GetFrame();
 				var subject = frame[ Name ];
+
 				if (subject!=null) {
 					var segment = subject[ Name ];
 
@@ -83,9 +127,73 @@ namespace Simulator {
 
 					xform.Translation = xform.Translation * new Vector3( 0.01f, 0.01f, 0.01f );
 
-					worldTransform = xform;
+					if (xform.Right.Length()<0.001f || xform.Forward.Length()<0.001f || xform.Up.Length()<0.001f ) {
+						TrackObject = false;
+					}
+
+					lock (this) {
+						worldTransform = xform;
+					}
 				}
 			}
+		}
+
+
+		Thread takeofThread;
+
+		public void RunTakeoffThrustEstimation() {
+			takeofThread = new Thread( TakeoffThrustEstimation );
+			takeofThread.Start();
+		}
+
+
+		public void TakeoffThrustEstimation ()
+		{
+			float currentHeight = Vector3.Dot( worldTransform.Translation, Vector3.Up );
+
+			Console.WriteLine("Takeoff thrust estimation procedure");
+
+			bool raising = true;
+
+			lock (this) {
+				Rotor1 = Rotor2 = Rotor3 = Rotor4 = 12;
+			}
+
+			Console.WriteLine("Thrust set to zero");
+			Thread.Sleep(2000);
+			
+
+			while (true) {
+
+				Thread.Sleep(50);
+
+				lock (this) {
+					
+					Rotor1 = Rotor1 + ( raising ? 1 : -50 );
+					Rotor2 = Rotor1;
+					Rotor3 = Rotor1;
+					Rotor4 = Rotor1;
+
+					Console.WriteLine("Thrust : {0}", Rotor1);
+
+					float height = Vector3.Dot( worldTransform.Translation, Vector3.Up );
+					if ( (height - currentHeight) > 0.02 && raising ) {
+						raising = false;
+						Console.WriteLine( "Takeoff thrust detected : {0}", Rotor1 );
+					}
+
+					if (Rotor1>179) {
+						raising = false;
+						Console.WriteLine( "Unable to takeoff!" );
+					}
+				}
+
+				if (Rotor1<=10) {
+					break;
+				}
+			}
+
+			Console.WriteLine("Done");
 		}
 
 
@@ -111,9 +219,11 @@ namespace Simulator {
 		}
 		
 
+
 		Thread  commThread;
 		bool	commAbortRequest = false;
 		SerialPort 	port;
+
 
 
 		public void RunCommunicationProtocol ()
@@ -123,6 +233,8 @@ namespace Simulator {
 			commThread.Start();
 		}
 
+
+
 		public void StopCommunicationProtocol ()
 		{
 			commAbortRequest = true;
@@ -130,8 +242,11 @@ namespace Simulator {
 		}
 
 
+
 		void CommunicationThreadFunc ()
 		{
+			bool engineCut = false;
+
 			Console.WriteLine("Communication thread started.");
 
 			try {
@@ -151,20 +266,30 @@ namespace Simulator {
 
 				while (!commAbortRequest) {
 
-					s = string.Format("X{0,2:X2}{1,2:X2}{2,2:X2}{3,2:X2}\n", (byte)Rotor1, (byte)Rotor2, (byte)Rotor3, (byte)Rotor4 );
+					if ( GamePad.GetState(0).IsButtonDown( Buttons.B ) ) {
+						engineCut = true;
+					}
+					if ( GamePad.GetState(0).IsButtonDown( Buttons.A ) ) {
+						engineCut = false;
+					}
+
+					if ( game.GetService<World>().Tracker==null || !TrackObject ) {
+						engineCut = true;
+					}
+
+					lock (this) {
+						if (engineCut) {
+							Rotor1 = Rotor2 = Rotor3 = Rotor4 = 10;
+						}
+						Rotor1 = Math.Min(180, Math.Max( Rotor1, 10 ));
+						Rotor2 = Math.Min(180, Math.Max( Rotor2, 10 ));
+						Rotor3 = Math.Min(180, Math.Max( Rotor3, 10 ));
+						Rotor4 = Math.Min(180, Math.Max( Rotor4, 10 ));
+						s = string.Format("X{0,2:X2}{1,2:X2}{2,2:X2}{3,2:X2}\n", (byte)Rotor1, (byte)Rotor2, (byte)Rotor3, (byte)Rotor4 );
+					}
 
 					port.Write( s );
-					/*buf[0] = (byte)'X';
-					buf[1] = (byte)Rotor1;
-					buf[2] = (byte)Rotor2;
-					buf[3] = (byte)Rotor3;
-					buf[4] = (byte)Rotor4;
-					buf[5] = (byte)'\n';
-					port.Write( buf, 0, buf.Length );*/
-
-					//string ack = port.ReadLine();
-					//Console.WriteLine(ack);
-					Thread.Sleep(50);
+					Thread.Sleep(30);
 				}
 
 			} catch (Exception ex) {
