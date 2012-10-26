@@ -21,6 +21,11 @@ namespace Simulator {
 		[Category("Rendering")]	public int			PreferredBackBufferHeight { set; get; }
 		[Category("Rendering")]	public bool			UseSecondMonitor { set; get; }
 
+		[Category("View")]		public float		Yaw { set; get; }
+		[Category("View")]		public float		Pitch { set; get; }
+		[Category("View")]		public float		Distance { set; get; }
+		[Category("View")]		public float		Fov			{ set; get; }
+
 		[Category("Tracker")]			public string		Host { set; get; }
 
 		[Category("Communications")]	public string		Port { set; get; }
@@ -36,11 +41,6 @@ namespace Simulator {
 			ViewAround
 		}
 
-		[Category("Camera")]	public CameraModes	CameraMode	{ set; get; }
-		[Category("Camera")]	public Vector3		Offset		{ set; get; }
-		[Category("Camera")]	public Vector3		PointOfView	{ set; get; }
-		[Category("Camera")]	public float		Fov			{ set; get; }
-
 
 		public Configuration()
 		{
@@ -51,11 +51,8 @@ namespace Simulator {
 
 			Port		=	"COM6";
 			BaudRate	=	38400;
-
-			CameraMode	=	CameraModes.ViewFromPoint;
-			Offset		=	Vector3.Backward + Vector3.Up * 0.25f;
-			PointOfView	=	new Vector3(3, 1.8f, 3);
 			Fov			=	70f;
+			Distance	=	3;
 		}
 	}
 }

@@ -164,5 +164,10 @@ namespace Simulator {
 			com6Thread.Start();
 		}
 
+		private void button1_Click ( object sender, EventArgs e )
+		{
+			game.GetService<World>().quadrocopters[0].RunTakeoffThrustEstimation();
+		}
+
 	}
 }

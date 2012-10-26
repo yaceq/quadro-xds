@@ -32,9 +32,9 @@ namespace Misc {
 
 			roll		=	- (float)Math.Atan2( dotY, dotX );
 
-			Debug.Assert( !float.IsNaN(yaw) );
+			/*Debug.Assert( !float.IsNaN(yaw) );
 			Debug.Assert( !float.IsNaN(pitch) );
-			Debug.Assert( !float.IsNaN(roll) );
+			Debug.Assert( !float.IsNaN(roll) );*/
 
 			return;
 		}	

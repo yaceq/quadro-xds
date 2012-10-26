@@ -46,9 +46,9 @@ namespace Simulator {
 
 		public AudioListener	Listener;
 
-		float yaw	= 45;
-		float pitch = 45;
-		float dist  = 3;
+		//float yaw	= -145;
+		//float pitch = 35;
+		//float dist  = 3;
 
 
 		/// <summary>
@@ -174,8 +174,9 @@ namespace Simulator {
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		public override void Update ( GameTime gameTime )
 		{
-			var ds = Game.GetService<DebugStrings>();
-			float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+			var ds		= Game.GetService<DebugStrings>();
+			var cfg 	= Game.GetService<Settings>().Configuration;
+			float dt	= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
 			Form form = (Form)Form.FromHandle( Game.Window.Handle );
 			MouseState mouseState = Mouse.GetState();
@@ -183,12 +184,13 @@ namespace Simulator {
 			if ( form.Focused ) { 
 				
 				if ( mouseState.LeftButton == XnaInput.ButtonState.Pressed ) {
-					yaw   += 0.5f * (oldMouseState.X - mouseState.X);
-					pitch -= 0.5f * (oldMouseState.Y - mouseState.Y);
+					cfg.Yaw   += 0.5f * (oldMouseState.X - mouseState.X);
+					cfg.Pitch -= 0.5f * (oldMouseState.Y - mouseState.Y);
+					cfg.Pitch =  MathHelper.Clamp( cfg.Pitch, -89, 89 );
 				}
 				
 				if ( mouseState.RightButton == XnaInput.ButtonState.Pressed ) {
-					dist *= (float)Math.Pow( 1.007f, oldMouseState.Y - mouseState.Y );
+					cfg.Distance *= (float)Math.Pow( 1.007f, oldMouseState.Y - mouseState.Y );
 				}
 			}
 
@@ -253,9 +255,9 @@ namespace Simulator {
 
 			Game.GraphicsDevice.ResetDeviceState();
 
-			var rot  = Matrix.CreateFromYawPitchRoll( MathHelper.ToRadians( yaw ), MathHelper.ToRadians( pitch ), 0 );
+			var rot  = Matrix.CreateFromYawPitchRoll( MathHelper.ToRadians( cfg.Yaw ), MathHelper.ToRadians( cfg.Pitch ), 0 );
 			var proj = Matrix.CreatePerspectiveFieldOfView( MathHelper.ToRadians(cfg.Fov), Game.GraphicsDevice.Viewport.AspectRatio, 0.01f, 500.0f );
-			var view = Matrix.CreateLookAt( rot.Forward * dist, Vector3.Zero, Vector3.Up );
+			var view = Matrix.CreateLookAt( rot.Forward * cfg.Distance, Vector3.Zero, Vector3.Up );
 
 
 			if (firstFrame) {
@@ -281,6 +283,8 @@ namespace Simulator {
 
 
 			dr.DrawGrid(8);
+
+			dr.DrawBasis( Matrix.CreateTranslation( Vector3.Up ), 0.5f );
 
 		
 
