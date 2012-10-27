@@ -112,6 +112,12 @@ namespace Misc {
 		public void DrawGrid ( int wireCount ) 
 		{
 			int gridsz = wireCount;
+			for (float x=-gridsz; x<=gridsz; x+=0.25f ) {
+				float dim = 0.6f;
+				if (x==0) dim = 1.0f;
+				DrawLine( new Vector3(x, 0, gridsz), new Vector3(x, 0, -gridsz), Color.DarkGray * dim );
+				DrawLine( new Vector3(gridsz, 0, x), new Vector3(-gridsz, 0, x), Color.DarkGray * dim);
+			}
 			for (int x=-gridsz; x<=gridsz; x+=1 ) {
 				float dim = 0.7f;
 				if (x==0) dim = 1.0f;

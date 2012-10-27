@@ -282,7 +282,7 @@ namespace Simulator {
 			}
 
 
-			dr.DrawGrid(8);
+			dr.DrawGrid(3);
 
 			dr.DrawBasis( Matrix.CreateTranslation( Vector3.Up ), 0.5f );
 
