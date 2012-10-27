@@ -21,7 +21,7 @@ namespace Simulator {
 	public class Tracker : IDisposable {	
 	
 		public float Scale = 0.1f;	   
-
+																 
 		public class Frame {
 			public List<Subject> Subjects;
 			public Subject this[string name] {
