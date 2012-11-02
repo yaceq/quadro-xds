@@ -140,6 +140,8 @@ namespace Simulator {
 		/// </summary>
 		public void Connect3DMouse ()
 		{
+			return;
+
 			try {
 				this.device		= new TDx.TDxInput.Device();
 				this.sensor		= this.device.Sensor;

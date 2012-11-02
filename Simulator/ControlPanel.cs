@@ -5,6 +5,8 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.IO;
+using System.Timers;
 using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Xna.Framework;
@@ -167,6 +169,36 @@ namespace Simulator {
 		private void button1_Click ( object sender, EventArgs e )
 		{
 			game.GetService<World>().quadrocopters[0].RunTakeoffThrustEstimation();
+		}
+
+		private void trackBar5_Scroll ( object sender, EventArgs e )
+		{
+			label1.Text = "Thrust = " + trackBar5.Value.ToString();
+			game.GetService<World>().quadrocopters[0].ThrustTest = trackBar5.Value;
+		}
+
+		private void button2_Click ( object sender, EventArgs e )
+		{											  
+			var q = game.GetService<World>().quadrocopters[0];
+
+			if (q.logWriter==null) {
+
+				string name = string.Format("{0}_{1:yyyy_MM_dd_HH_mm_ss}.log", q.Name, DateTime.Now);
+				q.logWriter = new StreamWriter( name, false );
+				q.firstLine	= true;
+
+				button2.Text = string.Format("Log: {0}\r\nStop Logging", name);
+
+			} else {
+
+				button2.Text = "Start Logging";
+
+				q.logWriter.Flush();
+				q.logWriter.Close();
+				q.logWriter.Dispose();
+				q.logWriter = null;
+
+			}
 		}
 
 	}
