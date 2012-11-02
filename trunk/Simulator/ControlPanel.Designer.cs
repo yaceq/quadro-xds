@@ -38,6 +38,7 @@
 			this.quadrocopterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.connectToQuadrocopterViaCOMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.disconnectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.connectCOM6ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.splitter1 = new System.Windows.Forms.Splitter();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -49,8 +50,9 @@
 			this.trackBar2 = new System.Windows.Forms.TrackBar();
 			this.trackBar3 = new System.Windows.Forms.TrackBar();
 			this.trackBar4 = new System.Windows.Forms.TrackBar();
-			this.connectCOM6ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.button1 = new System.Windows.Forms.Button();
+			this.trackBar5 = new System.Windows.Forms.TrackBar();
+			this.label1 = new System.Windows.Forms.Label();
+			this.button2 = new System.Windows.Forms.Button();
 			this.menuStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
@@ -60,6 +62,7 @@
 			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar3)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar4)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar5)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// menuStrip1
@@ -153,6 +156,13 @@
 			this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(259, 22);
 			this.disconnectToolStripMenuItem.Text = "Disconnect";
 			this.disconnectToolStripMenuItem.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
+			// 
+			// connectCOM6ToolStripMenuItem
+			// 
+			this.connectCOM6ToolStripMenuItem.Name = "connectCOM6ToolStripMenuItem";
+			this.connectCOM6ToolStripMenuItem.Size = new System.Drawing.Size(259, 22);
+			this.connectCOM6ToolStripMenuItem.Text = "Connect COM6";
+			this.connectCOM6ToolStripMenuItem.Click += new System.EventHandler(this.connectCOM6ToolStripMenuItem_Click);
 			// 
 			// splitter1
 			// 
@@ -265,30 +275,45 @@
 			this.trackBar4.Value = 10;
 			this.trackBar4.Scroll += new System.EventHandler(this.trackBar1_Scroll);
 			// 
-			// connectCOM6ToolStripMenuItem
+			// trackBar5
 			// 
-			this.connectCOM6ToolStripMenuItem.Name = "connectCOM6ToolStripMenuItem";
-			this.connectCOM6ToolStripMenuItem.Size = new System.Drawing.Size(259, 22);
-			this.connectCOM6ToolStripMenuItem.Text = "Connect COM6";
-			this.connectCOM6ToolStripMenuItem.Click += new System.EventHandler(this.connectCOM6ToolStripMenuItem_Click);
+			this.trackBar5.LargeChange = 10;
+			this.trackBar5.Location = new System.Drawing.Point(333, 355);
+			this.trackBar5.Maximum = 180;
+			this.trackBar5.Name = "trackBar5";
+			this.trackBar5.Size = new System.Drawing.Size(166, 45);
+			this.trackBar5.SmallChange = 10;
+			this.trackBar5.TabIndex = 14;
+			this.trackBar5.TickFrequency = 10;
+			this.trackBar5.Scroll += new System.EventHandler(this.trackBar5_Scroll);
 			// 
-			// button1
+			// label1
 			// 
-			this.button1.Enabled = false;
-			this.button1.Location = new System.Drawing.Point(333, 247);
-			this.button1.Name = "button1";
-			this.button1.Size = new System.Drawing.Size(166, 57);
-			this.button1.TabIndex = 13;
-			this.button1.Text = "Takeoff Thrust\r\nEstimation Procedure";
-			this.button1.UseVisualStyleBackColor = true;
-			this.button1.Click += new System.EventHandler(this.button1_Click);
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(334, 406);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(35, 13);
+			this.label1.TabIndex = 15;
+			this.label1.Text = "label1";
+			// 
+			// button2
+			// 
+			this.button2.Location = new System.Drawing.Point(333, 249);
+			this.button2.Name = "button2";
+			this.button2.Size = new System.Drawing.Size(166, 57);
+			this.button2.TabIndex = 16;
+			this.button2.Text = "Start Logging";
+			this.button2.UseVisualStyleBackColor = true;
+			this.button2.Click += new System.EventHandler(this.button2_Click);
 			// 
 			// ControlPanel
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(511, 718);
-			this.Controls.Add(this.button1);
+			this.Controls.Add(this.button2);
+			this.Controls.Add(this.label1);
+			this.Controls.Add(this.trackBar5);
 			this.Controls.Add(this.trackBar4);
 			this.Controls.Add(this.trackBar3);
 			this.Controls.Add(this.trackBar2);
@@ -310,6 +335,7 @@
 			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar3)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar4)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.trackBar5)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -341,7 +367,9 @@
 		public System.Windows.Forms.TrackBar trackBar3;
 		public System.Windows.Forms.TrackBar trackBar4;
 		private System.Windows.Forms.ToolStripMenuItem connectCOM6ToolStripMenuItem;
-		private System.Windows.Forms.Button button1;
+		public System.Windows.Forms.TrackBar trackBar5;
+		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.Button button2;
 
 	}
 }

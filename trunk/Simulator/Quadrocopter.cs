@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
@@ -42,6 +43,8 @@ namespace Simulator {
 		[Category("Motors")]	public volatile int	Rotor4;
         public string Name { protected set; get; }
 
+		public int ThrustTest =  0;
+
 		Model	frame;
 		Model	propellerA;
 		Model	propellerB;
@@ -49,6 +52,10 @@ namespace Simulator {
 		Game	game;
 		World	world;
 		Matrix	worldTransform;
+
+		public StreamWriter	logWriter = null;
+		public bool firstLine = false;
+
 
 
 		public Quadrocopter( Game game, World world, Vector3 position, string name )
@@ -69,6 +76,10 @@ namespace Simulator {
 
 		float oldYaw, oldPitch, oldRoll;
 
+		List<float> vFYaw	= new List<float>();
+		List<float> vFPitch	= new List<float>();
+		List<float> vFRoll	= new List<float>();
+
 		public void Update ( float dt )
 		{
 			var ds	= game.GetService<DebugStrings>();
@@ -88,6 +99,19 @@ namespace Simulator {
 			float vPitch = ( pitch - oldPitch ) / dt ;
 			float vRoll  = ( roll  - oldRoll  ) / dt ;
 
+			/*vFYaw	.Add( vYaw   );
+			vFPitch	.Add( vPitch );
+			vFRoll	.Add( vRoll  );
+
+			int sz = 2;
+			if (vFYaw	.Count>sz) vFYaw	.RemoveRange(0, vFYaw.Count   - sz );
+			if (vFPitch	.Count>sz) vFPitch	.RemoveRange(0, vFPitch.Count - sz );
+			if (vFRoll	.Count>sz) vFRoll	.RemoveRange(0, vFRoll.Count  - sz );
+
+			vYaw   =	vFYaw	.Average();
+			vPitch =	vFPitch	.Average();
+			vRoll  =	vFRoll	.Average();*/
+
 			ds.Add(string.Format( "YAW   = {0,10:F3} / {1,10:F3}", yaw   , vYaw   ) );
 			ds.Add(string.Format( "PITCH = {0,10:F3} / {1,10:F3}", pitch , vPitch ) );
 			ds.Add(string.Format( "ROLL  = {0,10:F3} / {1,10:F3}", roll  , vRoll  ) );
@@ -98,18 +122,47 @@ namespace Simulator {
 
 			var gps = GamePad.GetState(0);
 
-			float thrust = gps.Triggers.Right;
+			float thrust	= gps.Triggers.Right;
 
-			float t1	 = thrust;
-			float t2	 = thrust;
-			float t3	 = thrust;
-			float t4	 = thrust;
+			Vector2	rud		= gps.ThumbSticks.Right;
+			Vector2	rud2	= gps.ThumbSticks.Left;
 
-			Rotor1	=	(int) ( 10 + 169 * t1 );
-			Rotor2	=	(int) ( 10 + 169 * t2 );
-			Rotor3	=	(int) ( 10 + 169 * t3 );
-			Rotor4	=	(int) ( 10 + 169 * t4 );
+			bool  engine	= thrust > 0.02f;
+			float rollT		= - ( roll  * cfg.RollK  + rud.X  + vRoll  * cfg.RollD  );
+			float pitchT	= - ( pitch * cfg.PitchK + rud.Y  + vPitch * cfg.PitchD );
+			float yawT		= 0;//- ( yaw   * cfg.YawK   + rud2.X + vYaw   * cfg.YawD   ) * thrust;
+
+			float t1		= MathHelper.Clamp( thrust + rollT + pitchT + yawT, 0, 1 );
+			float t2		= MathHelper.Clamp( thrust + rollT - pitchT - yawT, 0, 1 );
+			float t3		= MathHelper.Clamp( thrust - rollT - pitchT + yawT, 0, 1 );
+			float t4		= MathHelper.Clamp( thrust - rollT + pitchT - yawT, 0, 1 );
+
+			if (Math.Abs( roll  ) > 30 ) t1 = t2 = t3 = t4 = 0;
+			if (Math.Abs( pitch ) > 30 ) t1 = t2 = t3 = t4 = 0;
+
+			Rotor1	=	(int) ( 50 + 80 * t1 );
+			Rotor2	=	(int) ( 50 + 80 * t2 );
+			Rotor3	=	(int) ( 50 + 80 * t3 );
+			Rotor4	=	(int) ( 50 + 80 * t4 );
 			
+			if (!engine) {
+				Rotor1 = Rotor2 = Rotor3 = Rotor4 = 0;
+			}
+
+			if (logWriter!=null) {
+				if (firstLine) {
+					logWriter.WriteLine("# X Y Z   Yaw Pitch Roll   VYaw VPitch VRoll   Thrust   T1 T2 T3 T4   PWM1 PWM2 PWM3 PWM4");
+					firstLine = false;	
+				}
+
+				logWriter.WriteLine("{0} {1} {2}   {3} {4} {5}   {6} {7} {8}   {9}   {10} {11} {12} {13}   {14} {15} {16} {17}",	
+					worldTransform.Translation.X, worldTransform.Translation.Y, worldTransform.Translation.Z, 
+					yaw, pitch, roll,
+					vYaw, vPitch, vRoll,
+					thrust, 
+					t1, t2, t3, t4, 
+					Rotor1, Rotor2, Rotor3, Rotor4 );
+			}
 		}
 
 
@@ -281,6 +334,9 @@ namespace Simulator {
 						if (engineCut) {
 							Rotor1 = Rotor2 = Rotor3 = Rotor4 = 10;
 						}
+						//if (ThrustTest>0) {
+						//    Rotor1 = Rotor2 = Rotor3 = Rotor4 = ThrustTest;
+						//}
 						Rotor1 = Math.Min(180, Math.Max( Rotor1, 10 ));
 						Rotor2 = Math.Min(180, Math.Max( Rotor2, 10 ));
 						Rotor3 = Math.Min(180, Math.Max( Rotor3, 10 ));
