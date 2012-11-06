@@ -75,6 +75,7 @@ namespace Simulator {
 
 
 		float oldYaw, oldPitch, oldRoll;
+		Vector3	oldUp;
 
 		List<float> vFYaw	= new List<float>();
 		List<float> vFPitch	= new List<float>();
@@ -89,8 +90,8 @@ namespace Simulator {
 			UpdateFromTracker();
 
 			float yaw, pitch, roll;
-
 			worldTransform.ToAngles( out yaw, out pitch, out roll );
+
 			yaw   = MathHelper.ToDegrees( yaw   );
 			pitch = MathHelper.ToDegrees( pitch );
 			roll  = MathHelper.ToDegrees( roll  );
@@ -99,26 +100,15 @@ namespace Simulator {
 			float vPitch = ( pitch - oldPitch ) / dt ;
 			float vRoll  = ( roll  - oldRoll  ) / dt ;
 
-			/*vFYaw	.Add( vYaw   );
-			vFPitch	.Add( vPitch );
-			vFRoll	.Add( vRoll  );
+			oldYaw   = yaw;
+			oldPitch = pitch;
+			oldRoll  = roll;
 
-			int sz = 2;
-			if (vFYaw	.Count>sz) vFYaw	.RemoveRange(0, vFYaw.Count   - sz );
-			if (vFPitch	.Count>sz) vFPitch	.RemoveRange(0, vFPitch.Count - sz );
-			if (vFRoll	.Count>sz) vFRoll	.RemoveRange(0, vFRoll.Count  - sz );
-
-			vYaw   =	vFYaw	.Average();
-			vPitch =	vFPitch	.Average();
-			vRoll  =	vFRoll	.Average();*/
+		#if false
 
 			ds.Add(string.Format( "YAW   = {0,10:F3} / {1,10:F3}", yaw   , vYaw   ) );
 			ds.Add(string.Format( "PITCH = {0,10:F3} / {1,10:F3}", pitch , vPitch ) );
 			ds.Add(string.Format( "ROLL  = {0,10:F3} / {1,10:F3}", roll  , vRoll  ) );
-
-			oldYaw   = yaw;
-			oldPitch = pitch;
-			oldRoll  = roll;
 
 			var gps = GamePad.GetState(0);
 
@@ -135,33 +125,83 @@ namespace Simulator {
 			float t1		= MathHelper.Clamp( thrust + rollT + pitchT + yawT, 0, 1 );
 			float t2		= MathHelper.Clamp( thrust + rollT - pitchT - yawT, 0, 1 );
 			float t3		= MathHelper.Clamp( thrust - rollT - pitchT + yawT, 0, 1 );
-			float t4		= MathHelper.Clamp( thrust - rollT + pitchT - yawT, 0, 1 );
+			float t4		= MathHelper.Clamp( thrust - rollT + pitchT - yawT, 0, 1 );*/
+		#else
+			var gps = GamePad.GetState(0);
 
-			if (Math.Abs( roll  ) > 30 ) t1 = t2 = t3 = t4 = 0;
-			if (Math.Abs( pitch ) > 30 ) t1 = t2 = t3 = t4 = 0;
+			float thrust	= gps.Triggers.Right;
+
+			var up			= worldTransform.Up;
+			var omega		= Vector3.Cross( up, ( up - oldUp ) / dt );
+			var localOmega	= Vector3.TransformNormal( omega, Matrix.Invert(worldTransform) );
+			oldUp			= up;
+
+			var targetUp	= Vector3.TransformNormal( Vector3.Up, Matrix.Invert(worldTransform) );
+
+			var torque		= cfg.StabK * Vector3.Cross( targetUp, Vector3.Up )
+							+ cfg.StabD * (float)Math.Exp( -localOmega.LengthSquared() ) * localOmega;
+
+			var e1			= 0.15f * ( new Vector3( -1, 0, +1 ).Normalized() );
+			var e2			= 0.15f * ( new Vector3( +1, 0, +1 ).Normalized() );
+
+			var f1			= Vector3.Dot( e2, torque ); 
+			var f2			= Vector3.Dot( e1, torque ); 
+
+			//var testTorq	= e1 * f1 + e2 * f2 + e3 * f3 + e4 * f4;
+
+			float t1		= MathHelper.Clamp( thrust + f1, 0, 1 );
+			float t2		= MathHelper.Clamp( thrust + f2, 0, 1 );
+			float t3		= MathHelper.Clamp( thrust - f1, 0, 1 );
+			float t4		= MathHelper.Clamp( thrust - f2, 0, 1 );//*/
+
+
+			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( torque	 , worldTransform  ), Color.Red );
+			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( omega	 , worldTransform  ), Color.Yellow );
+			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( targetUp , worldTransform  ), Color.Blue );
+			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( up		 , Matrix.Identity ), Color.Green );
+
+			/*if (logWriter!=null) {
+			    if (firstLine) {
+			        logWriter.WriteLine("# TX TY TZ   UpX UpY UpZ");
+			        firstLine = false;	
+			    }
+
+			    logWriter.WriteLine("{0} {1} {2}   {3} {4} {5}   {6} {7} {8}   {9}   {10} {11} {12} {13}   {14} {15} {16} {17}",	
+			        worldTransform.Translation.X, worldTransform.Translation.Y, worldTransform.Translation.Z, 
+			        yaw, pitch, roll,
+			        vYaw, vPitch, vRoll,
+			        thrust, 
+			        t1, t2, t3, t4, 
+			        Rotor1, Rotor2, Rotor3, Rotor4 );
+			} */
+			
+
+		#endif
 
 			Rotor1	=	(int) ( 50 + 80 * t1 );
 			Rotor2	=	(int) ( 50 + 80 * t2 );
 			Rotor3	=	(int) ( 50 + 80 * t3 );
 			Rotor4	=	(int) ( 50 + 80 * t4 );
 			
+			bool  engine	= thrust > 0.02f;
+
 			if (!engine) {
 				Rotor1 = Rotor2 = Rotor3 = Rotor4 = 0;
 			}
 
 			if (logWriter!=null) {
-				if (firstLine) {
-					logWriter.WriteLine("# X Y Z   Yaw Pitch Roll   VYaw VPitch VRoll   Thrust   T1 T2 T3 T4   PWM1 PWM2 PWM3 PWM4");
-					firstLine = false;	
-				}
+			    if (firstLine) {
+			        logWriter.WriteLine("# X Y Z   Yaw Pitch Roll   VYaw VPitch VRoll   Thrust   T1 T2 T3 T4   PWM1 PWM2 PWM3 PWM4");
+			        firstLine = false;	
+			    }
 
-				logWriter.WriteLine("{0} {1} {2}   {3} {4} {5}   {6} {7} {8}   {9}   {10} {11} {12} {13}   {14} {15} {16} {17}",	
-					worldTransform.Translation.X, worldTransform.Translation.Y, worldTransform.Translation.Z, 
-					yaw, pitch, roll,
-					vYaw, vPitch, vRoll,
-					thrust, 
-					t1, t2, t3, t4, 
-					Rotor1, Rotor2, Rotor3, Rotor4 );
+			    logWriter.WriteLine("{0} {1} {2}   {3} {4} {5}   {6} {7} {8}   {9}   {10} {11} {12} {13}   {14} {15} {16} {17}",	
+			        worldTransform.Translation.X, worldTransform.Translation.Y, worldTransform.Translation.Z, 
+			        yaw, pitch, roll,
+			        vYaw, vPitch, vRoll,
+			        thrust, 
+			        t1, t2, t3, t4, 
+			        Rotor1, Rotor2, Rotor3, Rotor4 );
 			}
 		}
 
