@@ -33,13 +33,16 @@ namespace Simulator {
 
 		[Category("Physics")]			public bool			ShowBodies { set; get; }
 
-		[Category("Stabiliazation")]	public float		RollK { set; get; }
-		[Category("Stabiliazation")]	public float		RollD { set; get; }
-		[Category("Stabiliazation")]	public float		PitchK { set; get; }
-		[Category("Stabiliazation")]	public float		PitchD { set; get; }
-		[Category("Stabiliazation")]	public float		YawK { set; get; }
-		[Category("Stabiliazation")]	public float		YawD { set; get; }
+		//[Category("Stabiliazation")]	public float		RollK { set; get; }
+		//[Category("Stabiliazation")]	public float		RollD { set; get; }
+		//[Category("Stabiliazation")]	public float		PitchK { set; get; }
+		//[Category("Stabiliazation")]	public float		PitchD { set; get; }
+		//[Category("Stabiliazation")]	public float		YawK { set; get; }
+		//[Category("Stabiliazation")]	public float		YawD { set; get; }
 
+		[Category("Stabiliazation")]	public float		StabD  { set; get; }
+		[Category("Stabiliazation")]	public float		StabD3 { set; get; }
+		[Category("Stabiliazation")]	public float		StabK  { set; get; }
 
 		public enum CameraModes {
 			BoundToQuadrocopter,
