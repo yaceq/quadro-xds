@@ -56,6 +56,7 @@ namespace Simulator {
 		public StreamWriter	logWriter = null;
 		public bool firstLine = false;
 
+		public Vector3	integralNormal = Vector3.Zero;
 
 
 		public Quadrocopter( Game game, World world, Vector3 position, string name )
@@ -80,6 +81,9 @@ namespace Simulator {
 		List<float> vFYaw	= new List<float>();
 		List<float> vFPitch	= new List<float>();
 		List<float> vFRoll	= new List<float>();
+
+		public Vector3	integralDrift = Vector3.Zero;
+		public float	integralDriftTime = 0;
 
 		public void Update ( float dt )
 		{
@@ -129,6 +133,14 @@ namespace Simulator {
 		#else
 			var gps = GamePad.GetState(0);
 
+			if (gps.DPad.Right == ButtonState.Pressed) cfg.TrimRoll  -= 0.01f;
+			if (gps.DPad.Left  == ButtonState.Pressed) cfg.TrimRoll  += 0.01f;
+			if (gps.DPad.Up    == ButtonState.Pressed) cfg.TrimPitch -= 0.01f;
+			if (gps.DPad.Down  == ButtonState.Pressed) cfg.TrimPitch += 0.01f;
+			if (gps.Buttons.LeftShoulder   == ButtonState.Pressed) cfg.Yaw -= 0.01f;
+			if (gps.Buttons.RightShoulder  == ButtonState.Pressed) cfg.Yaw += 0.01f;
+
+
 			float thrust	= gps.Triggers.Right;
 
 			var up			= worldTransform.Up;
@@ -138,8 +150,19 @@ namespace Simulator {
 
 			var targetUp	= Vector3.TransformNormal( Vector3.Up, Matrix.Invert(worldTransform) );
 
+			if (thrust<=0.02f) {
+				integralDrift += Vector3.Cross( targetUp, Vector3.Up ) * dt;
+				integralDriftTime += dt;
+			} else {
+				integralNormal += Vector3.Cross( targetUp, Vector3.Up ) * dt;
+				if (integralDriftTime>0.0001) {
+					integralNormal -= integralDrift / integralDriftTime * dt;
+				}
+			}
+
 			var torque		= cfg.StabK * Vector3.Cross( targetUp, Vector3.Up )
-							+ cfg.StabD * (float)Math.Exp( -localOmega.LengthSquared() ) * localOmega;
+							+ cfg.StabD * (float)Math.Exp( -localOmega.LengthSquared() ) * localOmega
+							+ cfg.StabI * integralNormal;
 
 			var e1			= 0.15f * ( new Vector3( -1, 0, +1 ).Normalized() );
 			var e2			= 0.15f * ( new Vector3( +1, 0, +1 ).Normalized() );
@@ -149,15 +172,16 @@ namespace Simulator {
 
 			//var testTorq	= e1 * f1 + e2 * f2 + e3 * f3 + e4 * f4;
 
-			float t1		= MathHelper.Clamp( thrust + f1, 0, 1 );
-			float t2		= MathHelper.Clamp( thrust + f2, 0, 1 );
-			float t3		= MathHelper.Clamp( thrust - f1, 0, 1 );
-			float t4		= MathHelper.Clamp( thrust - f2, 0, 1 );//*/
+			float t1		= MathHelper.Clamp( thrust + f1, 0, 1 ) + cfg.TrimRoll + cfg.TrimPitch + cfg.TrimYaw;
+			float t2		= MathHelper.Clamp( thrust + f2, 0, 1 ) + cfg.TrimRoll - cfg.TrimPitch - cfg.TrimYaw;
+			float t3		= MathHelper.Clamp( thrust - f1, 0, 1 ) - cfg.TrimRoll - cfg.TrimPitch + cfg.TrimYaw;
+			float t4		= MathHelper.Clamp( thrust - f2, 0, 1 ) - cfg.TrimRoll + cfg.TrimPitch - cfg.TrimYaw;//*/
 
 
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( torque	 , worldTransform  ), Color.Red );
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( omega	 , worldTransform  ), Color.Yellow );
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( targetUp , worldTransform  ), Color.Blue );
+			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( integralNormal , worldTransform  ), Color.Magenta );
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( up		 , Matrix.Identity ), Color.Green );
 
 			/*if (logWriter!=null) {
@@ -211,6 +235,9 @@ namespace Simulator {
 		{
 			if ( TrackObject && world.Tracker!=null ) {
 				var frame = world.Tracker.GetFrame();
+				if (frame==null) {
+					return;
+				}
 				var subject = frame[ Name ];
 
 				if (subject!=null) {

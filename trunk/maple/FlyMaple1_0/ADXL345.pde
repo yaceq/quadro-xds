@@ -1,9 +1,9 @@
 
 ////////加速度传感器 ADXL345 功能函数/////////////////////////////
-#define ACC (0x53)    //定义ADXL345地址，ALT ADDRESS 管脚接地
-#define A_TO_READ (6) //读取每次占用的字节数 (每个坐标轴占两个字节)
-#define XL345_DEVID   0xE5 //ADXL345 加速度地址，需要注意芯片有一个地址选择线将AD0连接到GND口
-// ADXL345控制寄存器
+#define ACC (0x53)    //efined ADXL345 address, ALT ADDRESS pin is grounded
+#define A_TO_READ (6) //Read the number of bytes per occupied (each axis accounted for two-byte)
+#define XL345_DEVID   0xE5 //The ADXL345 accelerometer address, you need to pay attention to the chip address select line the AD0 connected to GND mouth
+// ADXL345 Control register
 #define ADXLREG_BW_RATE      0x2C
 #define ADXLREG_POWER_CTL    0x2D
 #define ADXLREG_DATA_FORMAT  0x31
@@ -12,7 +12,7 @@
 #define ADXLREG_TAP_AXES     0x2A
 #define ADXLREG_DUR          0x21
 
-//ADXL345数据寄存器
+//ADXL345 Data register
 #define ADXLREG_DEVID        0x00
 #define ADXLREG_DATAX0       0x32
 #define ADXLREG_DATAX1       0x33
@@ -21,7 +21,7 @@
 #define ADXLREG_DATAZ0       0x36
 #define ADXLREG_DATAZ1       0x37
 
-// 加速度传感器误差修正的偏移量
+// Acceleration sensor error correction offset
 int16 a_offx = 0;
 int16 a_offy = 0;
 int16 a_offz = 0;
@@ -32,7 +32,7 @@ int16 a_offz = 0;
 //           address:操作寄存器地址 
 //           val:写入寄存器值
 //返回值:    无                                                               
-//说明:      通过I2C总线将val写入到对应地址寄存器中
+//说明:      Val is written to the corresponding address register through the I2C bus
 ///////////////////////////////////////////////////////////////////////////////////
 void writeTo(uint8 DEVICE, uint8 address, uint8 val) 
 {
@@ -78,11 +78,11 @@ void readFrom(uint8 DEVICE, uint8 address, uint8 num, uint8 *msg_data)
 //函数原型:  void initAcc(void)             	     
 //参数说明:  无                                        
 //返回值:    无                                                               
-//说明:      初始化ADXL345加速度计
+//说明:      Initialize the ADXL345 accelerometer
 ///////////////////////////////////////////////////////////////////////////////////
 void initAcc(void) 
 {
-    //all i2c transactions send and receive arrays of i2c_msg objects 
+  //all i2c transactions send and receive arrays of i2c_msg objects 
   i2c_msg msgs[1]; // we dont do any bursting here, so we only need one i2c_msg object
   uint8 msg_data[2];
   msg_data = {0x00,0x00};
@@ -122,13 +122,13 @@ void initAcc(void)
 ///////////////////////////////////////////////////////////////////////////////////
 void getAccelerometerData(int16 * result) 
 {
-  int16 regAddress = ADXLREG_DATAX0;    //加速度传感器ADXL345第一轴的数据地址
+  int16 regAddress = ADXLREG_DATAX0;    //The address of the data of the first axis of the acceleration sensor ADXL345
   uint8 buff[A_TO_READ];
 
-  readFrom(ACC, regAddress, A_TO_READ, buff); //读取加速度传感器ADXL345的数据
+  readFrom(ACC, regAddress, A_TO_READ, buff); //Read the data of the acceleration sensor ADXL345
 
-  //每个轴的读数有10位分辨率，即2个字节.  
-  //我们要转换两个bytes为一个int变量
+  //Readings for each axis with 10-bit resolution, ie 2 bytes. 
+  //We want to convert two bytes into an int variable
   result[0] = (((int16)buff[1]) << 8) | buff[0] + a_offx;   
   result[1] = (((int16)buff[3]) << 8) | buff[2] + a_offy;
   result[2] = (((int16)buff[5]) << 8) | buff[4] + a_offz;

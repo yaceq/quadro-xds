@@ -125,7 +125,7 @@ double compassHeading(void)
   float heading  = 0;
   int16 compassdata[3]; 
   compassRead(compassdata); 
-  delay(67);//如果采样率为15HZ需要延迟67MS
+  delay(67);//If the sampling rate is 15HZ need to delay 67MS
 
   fx = ((float) compassdata[0]) / x_scale;
   fy = ((float) compassdata[1]) / y_scale;
@@ -136,9 +136,7 @@ double compassHeading(void)
 
   return(heading * 180/PI); 
 
-  
-  
-     /*使用俯仰角进行补偿的计算方式详见 SF9DOF代码
+  /*Pitch angle compensation calculation see SF9DOF代码
   float MAG_X;
   float MAG_Y;
   float cos_roll;
@@ -156,5 +154,5 @@ double compassHeading(void)
   MAG_Y = magnetom_y*cos_roll-magnetom_z*sin_roll;
   // Magnetic Heading
   MAG_Heading = atan2(-MAG_Y,MAG_X);
- */
+  */
 }

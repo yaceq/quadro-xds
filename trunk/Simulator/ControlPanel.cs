@@ -201,5 +201,13 @@ namespace Simulator {
 			}
 		}
 
+		private void button1_Click_1 ( object sender, EventArgs e )
+		{
+			var q = game.GetService<World>().quadrocopters[0];
+			q.integralNormal = Vector3.Zero;
+			q.integralDrift  = Vector3.Zero;
+			q.integralDriftTime = 0;
+		}
+
 	}
 }

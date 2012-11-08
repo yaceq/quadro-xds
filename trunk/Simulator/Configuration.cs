@@ -40,9 +40,13 @@ namespace Simulator {
 		//[Category("Stabiliazation")]	public float		YawK { set; get; }
 		//[Category("Stabiliazation")]	public float		YawD { set; get; }
 
-		[Category("Stabiliazation")]	public float		StabD  { set; get; }
-		[Category("Stabiliazation")]	public float		StabD3 { set; get; }
-		[Category("Stabiliazation")]	public float		StabK  { set; get; }
+		[Category("Stabiliazation")]	public float		StabK { set; get; }
+		[Category("Stabiliazation")]	public float		StabD { set; get; }
+		[Category("Stabiliazation")]	public float		StabI { set; get; }
+
+		[Category("Stabiliazation")]	public float		TrimYaw { set; get; }
+		[Category("Stabiliazation")]	public float		TrimRoll { set; get; }
+		[Category("Stabiliazation")]	public float		TrimPitch { set; get; }
 
 		public enum CameraModes {
 			BoundToQuadrocopter,
