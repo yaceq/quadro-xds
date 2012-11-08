@@ -1,13 +1,13 @@
-// 陀螺仪 ITG3205 
-#define GYRO 0x68 // 定义传感器地址,将AD0连接到GND口，传感器地址为二进制数11101000 (请参考你接口板的原理图)
-#define G_SMPLRT_DIV 0x15  //采样率寄存器地址
-#define G_DLPF_FS 0x16     //检测灵敏度及其低通滤波器设置
-#define G_INT_CFG 0x17     //配置寄存器
-#define G_PWR_MGM 0x3E     //传感器数据寄存器起始地址，包括温度及其3轴角速度
+// Gyroscope ITG3205 
+#define GYRO 0x68 // Defined sensor address, AD0 is connected to GND port, sensor address is a binary number 11101000 (please refer to your interface board schematics)
+#define G_SMPLRT_DIV 0x15  //Sampling rate register address
+#define G_DLPF_FS 0x16     //Detection sensitivity and low-pass filter set
+#define G_INT_CFG 0x17     //Configuration register
+#define G_PWR_MGM 0x3E     //Sensor data register starting address, including the temperature of its 3-axis angular velocity
 
-#define G_TO_READ 8 // x,y,z 每个轴2个字节，另外再加上2个字节的温度
+#define G_TO_READ 8        //each of x, y, z-axis of two bytes, plus another two byte temperature
 
-// 陀螺仪误差修正的偏移量 
+// Gyro error correction offset 
 int16 g_offx = 0;
 int16 g_offy = 0;
 int16 g_offz = 0;
@@ -22,14 +22,14 @@ void initGyro(void)
 {
   /*****************************************
    * ITG 3200
-   * 电源管理设定：
-   * 时钟选择 =内部振荡器
-   * 无复位, 无睡眠模式
-   * 无待机模式
-   * 采样率 = 125Hz
-   * 参数为+ / - 2000度/秒
-   * 低通滤波器=5HZ
-   * 没有中断
+   * Power management settings：
+   * Clock select = internal oscillator
+   * No reset, no sleep mode
+   * Standby mode
+   * Sampling rate = 125Hz
+   * Parameter is + / - 2000度/秒
+   * Low-pass filter=5HZ
+   * Without interruption
    ******************************************/
   writeTo(GYRO, G_PWR_MGM, 0x00);
   writeTo(GYRO, G_SMPLRT_DIV, 0x07); // EB, 50, 80, 7F, DE, 23, 20, FF
@@ -38,10 +38,10 @@ void initGyro(void)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//函数原型:  void getGyroscopeData(int16 * result)           	     
-//参数说明:  * result : 陀螺仪数据指针                                      
-//返回值:    无                                                               
-//说明:      读取ITG3205陀螺仪原始数据
+//Function prototype    : void getGyroscopeData(int16 * result)           	     
+//Parameter Description : * result : Gyro data pointer                                      
+//The return value      : No                                                               
+//Explain               : Read ITG3205 gyro raw data
 ///////////////////////////////////////////////////////////////////////////////////
 void getGyroscopeData(int16 * result)
 {
