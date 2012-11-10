@@ -85,13 +85,17 @@ namespace Simulator {
 		public Vector3	integralDrift = Vector3.Zero;
 		public float	integralDriftTime = 0;
 
+		public Box	box;
+
+		public float thrustTest2 = 0;
+
 		public void Update ( float dt )
 		{
 			var ds	= game.GetService<DebugStrings>();
 			var cfg = game.GetService<Settings>().Configuration;
 			var dr	= game.GetService<DebugRender>();
 
-			UpdateFromTracker();
+			UpdateFromTracker(dt);
 
 			float yaw, pitch, roll;
 			worldTransform.ToAngles( out yaw, out pitch, out roll );
@@ -142,6 +146,8 @@ namespace Simulator {
 
 
 			float thrust	= gps.Triggers.Right;
+
+			if (thrustTest2>0.02) thrust = thrustTest2;
 
 			var up			= worldTransform.Up;
 			var omega		= Vector3.Cross( up, ( up - oldUp ) / dt );
@@ -215,7 +221,7 @@ namespace Simulator {
 
 			if (logWriter!=null) {
 			    if (firstLine) {
-			        logWriter.WriteLine("# X Y Z   Yaw Pitch Roll   VYaw VPitch VRoll   Thrust   T1 T2 T3 T4   PWM1 PWM2 PWM3 PWM4");
+			        logWriter.WriteLine("# X Y Z   Yaw Pitch Roll   VYaw VPitch VRoll   Thrust   T1 T2 T3 T4   F1 F2 F3 F4");
 			        firstLine = false;	
 			    }
 
@@ -225,14 +231,22 @@ namespace Simulator {
 			        vYaw, vPitch, vRoll,
 			        thrust, 
 			        t1, t2, t3, t4, 
-			        Rotor1, Rotor2, Rotor3, Rotor4 );
+			        F1, F2, F3, F4 );
 			}
 		}
 
 
+		Queue<int> rotor1Delay = new Queue<int>();
+		Queue<int> rotor2Delay = new Queue<int>();
+		Queue<int> rotor3Delay = new Queue<int>();
+		Queue<int> rotor4Delay = new Queue<int>();
 
-		public void UpdateFromTracker ()
+		float angle1 = 0, angle2 = 0, angle3 = 0, angle4 = 0;
+		float F1 = 0, F2 = 0, F3 = 0, F4 = 0;
+
+		public void UpdateFromTracker (float dt)
 		{
+			var cfg = game.GetService<Settings>().Configuration;
 			if ( TrackObject && world.Tracker!=null ) {
 				var frame = world.Tracker.GetFrame();
 				if (frame==null) {
@@ -256,7 +270,54 @@ namespace Simulator {
 					}
 				}
 			}
+
+			if (cfg.UseSimulation) {
+
+				if (box==null) {
+					box = new Box(Vector3.Zero, 0.4f, 0.07f, 0.4f, 0.580f );
+					world.Space.Add( box );
+					world.Drawer.Add( box );
+				}
+
+				rotor1Delay.Enqueue( Rotor1 );
+				rotor2Delay.Enqueue( Rotor2 );
+				rotor3Delay.Enqueue( Rotor3 );
+				rotor4Delay.Enqueue( Rotor4 );
+
+				int r1,r2,r3,r4;
+				r1 = r2 = r3 = r4 = 0;
+
+				while (rotor1Delay.Count>cfg.DelayFrames) { r1 = rotor1Delay.Dequeue();	}
+				while (rotor2Delay.Count>cfg.DelayFrames) { r2 = rotor2Delay.Dequeue();	}
+				while (rotor3Delay.Count>cfg.DelayFrames) { r3 = rotor3Delay.Dequeue();	}
+				while (rotor4Delay.Count>cfg.DelayFrames) { r4 = rotor4Delay.Dequeue();	}
+
+				float	f1	=	MathHelper.Clamp((r1 - 48) / 80.0f * ( 2.5f + 0.05f ), 0, float.MaxValue);
+				float	f2	=	MathHelper.Clamp((r2 - 51) / 81.0f * ( 2.5f - 0.02f ), 0, float.MaxValue);
+				float	f3	=	MathHelper.Clamp((r3 - 53) / 79.0f * ( 2.5f + 0.04f ), 0, float.MaxValue);
+				float	f4	=	MathHelper.Clamp((r4 - 49) / 82.0f * ( 2.5f - 0.03f ), 0, float.MaxValue);
+
+				F1	=	MathHelper.Lerp( F1, f1, cfg.MotorLatency );
+				F2	=	MathHelper.Lerp( F2, f2, cfg.MotorLatency );
+				F3	=	MathHelper.Lerp( F3, f3, cfg.MotorLatency );
+				F4	=	MathHelper.Lerp( F4, f4, cfg.MotorLatency );
+
+				angle1	+=	(float)Math.Sqrt( Math.Max(0, F1) );
+				angle2	+=	(float)Math.Sqrt( Math.Max(0, F2) );
+				angle3	+=	(float)Math.Sqrt( Math.Max(0, F3) );
+				angle4	+=	(float)Math.Sqrt( Math.Max(0, F4) );
+
+				ApplyForceLL( ref box, dt, new Vector3( 1, 0,-1 ) * 0.15f, new Vector3( 0.02f, 1.0f, 0.03f).Normalized() * F1 ); 
+				ApplyForceLL( ref box, dt, new Vector3( 1, 0, 1 ) * 0.15f, new Vector3(-0.03f, 1.0f,-0.04f).Normalized() * F2 ); 
+				ApplyForceLL( ref box, dt, new Vector3(-1, 0, 1 ) * 0.15f, new Vector3( 0.01f, 1.0f,-0.02f).Normalized() * F3 ); 
+				ApplyForceLL( ref box, dt, new Vector3(-1, 0,-1 ) * 0.15f, new Vector3(-0.02f, 1.0f, 0.01f).Normalized() * F4 ); 
+
+				worldTransform	=	
+					Matrix.CreateFromYawPitchRoll( 0.033f, 0.021f, -0.029f ) * box.WorldTransform;
+			}
+
 		}
+
 
 
 		Thread takeofThread;
@@ -317,13 +378,18 @@ namespace Simulator {
 		}
 
 
+		float	rot1 = 3121 % 360;
+		float	rot2 = 1135 % 360;
+		float	rot3 = 6546 % 360;
+		float	rot4 = 1231 % 360;
 
 		public void Draw ( float dt, Matrix view, Matrix proj )
 		{
-			float	rot1 = 3121 % 360;
-			float	rot2 = 1135 % 360;
-			float	rot3 = 6546 % 360;
-			float	rot4 = 1231 % 360;
+
+			rot1 += Rotor1;
+			rot1 += Rotor2;
+			rot1 += Rotor3;
+			rot1 += Rotor4;
 
 			Vector3	arm1	=	(float)Math.Sqrt(2)/2 * ( Vector3.Right + Vector3.Forward  );
 			Vector3	arm2	=	(float)Math.Sqrt(2)/2 * ( Vector3.Right + Vector3.Backward );
@@ -332,10 +398,10 @@ namespace Simulator {
 
 			SimulatorGame.DrawModel( frame, worldTransform, view, proj );
 
-			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( rot1/3.14f) * Matrix.CreateTranslation( arm1 * 0.15f ) * worldTransform, view, proj );
-			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-rot2/3.14f) * Matrix.CreateTranslation( arm2 * 0.15f ) * worldTransform, view, proj );
-			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( rot3/3.14f) * Matrix.CreateTranslation( arm3 * 0.15f ) * worldTransform, view, proj );
-			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-rot4/3.14f) * Matrix.CreateTranslation( arm4 * 0.15f ) * worldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( angle1) * Matrix.CreateTranslation( arm1 * 0.15f ) * worldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-angle2) * Matrix.CreateTranslation( arm2 * 0.15f ) * worldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerA, Matrix.CreateRotationY( angle3) * Matrix.CreateTranslation( arm3 * 0.15f ) * worldTransform, view, proj );
+			SimulatorGame.DrawModel( propellerB, Matrix.CreateRotationY(-angle4) * Matrix.CreateTranslation( arm4 * 0.15f ) * worldTransform, view, proj );
 		}
 		
 
@@ -424,22 +490,22 @@ namespace Simulator {
 			Console.WriteLine("Communication thread aborted.");
 		}
 
-		//void ApplyForceLL ( ref Box box, float dt, Vector3 point, Vector3 localForce )
-		//{
-		//    var m = box.WorldTransform;
-		//    var p = Vector3.Transform(point, m);
-		//    var f = Vector3.TransformNormal(localForce * dt, m);
+		void ApplyForceLL ( ref Box box, float dt, Vector3 point, Vector3 localForce )
+		{
+		    var m = box.WorldTransform;
+		    var p = Vector3.Transform(point, m);
+		    var f = Vector3.TransformNormal(localForce * dt, m);
 
-		//    float groundEffect = 1 + 0.4f * (float)Math.Exp( -2*p.Y ) / MathHelper.E;
+		    float groundEffect = 1;// + 0.4f * (float)Math.Exp( -2*p.Y ) / MathHelper.E;
 
-		//    box.ApplyImpulse( p, f * groundEffect );
-		//}
+		    box.ApplyImpulse( p, f * groundEffect );
+		}
 
 
-		//void ApplyForceLG ( ref Box box, float dt, Vector3 point, Vector3 globalForce )
-		//{
-		//    var m = box.WorldTransform;
-		//    box.ApplyImpulse( Vector3.Transform(point, m), globalForce * dt );
-		//}
+		void ApplyForceLG ( ref Box box, float dt, Vector3 point, Vector3 globalForce )
+		{
+		    var m = box.WorldTransform;
+		    box.ApplyImpulse( Vector3.Transform(point, m), globalForce * dt );
+		}
 	}
 }
