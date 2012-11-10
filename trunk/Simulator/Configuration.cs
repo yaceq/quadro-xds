@@ -31,7 +31,10 @@ namespace Simulator {
 		[Category("Communications")]	public string		Port { set; get; }
 		[Category("Communications")]	public int			BaudRate		 { set; get; }
 
-		[Category("Physics")]			public bool			ShowBodies { set; get; }
+		[Category("Simulation")]			public bool			UseSimulation { set; get; }
+		[Category("Simulation")]			public bool			ShowBodies { set; get; }
+		[Category("Simulation")]			public uint			DelayFrames { set; get; }
+		[Category("Simulation")]			public float		MotorLatency { set; get; }
 
 		//[Category("Stabiliazation")]	public float		RollK { set; get; }
 		//[Category("Stabiliazation")]	public float		RollD { set; get; }
@@ -67,6 +70,8 @@ namespace Simulator {
 			BaudRate	=	38400;
 			Fov			=	70f;
 			Distance	=	3;
+
+			UseSimulation	=	true;
 		}
 	}
 }

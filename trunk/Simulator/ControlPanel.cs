@@ -207,6 +207,13 @@ namespace Simulator {
 			q.integralNormal = Vector3.Zero;
 			q.integralDrift  = Vector3.Zero;
 			q.integralDriftTime = 0;
+			q.box.WorldTransform	=	Matrix.Identity;
+		}
+
+		private void trackBar6_Scroll ( object sender, EventArgs e )
+		{
+			var q = game.GetService<World>().quadrocopters[0];
+			q.thrustTest2 =  trackBar6.Value / 1000.0f;
 		}
 
 	}
