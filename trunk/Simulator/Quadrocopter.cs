@@ -56,7 +56,6 @@ namespace Simulator {
 		public StreamWriter	logWriter = null;
 		public bool firstLine = false;
 
-		public Vector3	integralNormal = Vector3.Zero;
 
 
 		public Quadrocopter( Game game, World world, Vector3 position, string name )
@@ -82,13 +81,16 @@ namespace Simulator {
 		List<float> vFPitch	= new List<float>();
 		List<float> vFRoll	= new List<float>();
 
-		public Vector3	integralDrift = Vector3.Zero;
-		public float	integralDriftTime = 0;
-
 		public Box	box;
 
 		public float thrustTest2 = 0;
+		public Vector3 oldLocalOmega = Vector3.Zero;
 
+
+		/// <summary>
+		/// Updates intire state of the quad-rotor
+		/// </summary>
+		/// <param name="dt"></param>
 		public void Update ( float dt )
 		{
 			var ds	= game.GetService<DebugStrings>();
@@ -112,37 +114,15 @@ namespace Simulator {
 			oldPitch = pitch;
 			oldRoll  = roll;
 
-		#if false
-
-			ds.Add(string.Format( "YAW   = {0,10:F3} / {1,10:F3}", yaw   , vYaw   ) );
-			ds.Add(string.Format( "PITCH = {0,10:F3} / {1,10:F3}", pitch , vPitch ) );
-			ds.Add(string.Format( "ROLL  = {0,10:F3} / {1,10:F3}", roll  , vRoll  ) );
 
 			var gps = GamePad.GetState(0);
 
-			float thrust	= gps.Triggers.Right;
-
-			Vector2	rud		= gps.ThumbSticks.Right;
-			Vector2	rud2	= gps.ThumbSticks.Left;
-
-			bool  engine	= thrust > 0.02f;
-			float rollT		= - ( roll  * cfg.RollK  + rud.X  + vRoll  * cfg.RollD  );
-			float pitchT	= - ( pitch * cfg.PitchK + rud.Y  + vPitch * cfg.PitchD );
-			float yawT		= 0;//- ( yaw   * cfg.YawK   + rud2.X + vYaw   * cfg.YawD   ) * thrust;
-
-			float t1		= MathHelper.Clamp( thrust + rollT + pitchT + yawT, 0, 1 );
-			float t2		= MathHelper.Clamp( thrust + rollT - pitchT - yawT, 0, 1 );
-			float t3		= MathHelper.Clamp( thrust - rollT - pitchT + yawT, 0, 1 );
-			float t4		= MathHelper.Clamp( thrust - rollT + pitchT - yawT, 0, 1 );*/
-		#else
-			var gps = GamePad.GetState(0);
-
-			if (gps.DPad.Right == ButtonState.Pressed) cfg.TrimRoll  -= 0.01f;
-			if (gps.DPad.Left  == ButtonState.Pressed) cfg.TrimRoll  += 0.01f;
-			if (gps.DPad.Up    == ButtonState.Pressed) cfg.TrimPitch -= 0.01f;
-			if (gps.DPad.Down  == ButtonState.Pressed) cfg.TrimPitch += 0.01f;
-			if (gps.Buttons.LeftShoulder   == ButtonState.Pressed) cfg.Yaw -= 0.01f;
-			if (gps.Buttons.RightShoulder  == ButtonState.Pressed) cfg.Yaw += 0.01f;
+			if (gps.DPad.Right == ButtonState.Pressed)				{ cfg.TrimRoll  -= 0.01f; }
+			if (gps.DPad.Left  == ButtonState.Pressed)				{ cfg.TrimRoll  += 0.01f; }
+			if (gps.DPad.Up    == ButtonState.Pressed)				{ cfg.TrimPitch -= 0.01f; }
+			if (gps.DPad.Down  == ButtonState.Pressed)				{ cfg.TrimPitch += 0.01f; }
+			if (gps.Buttons.LeftShoulder   == ButtonState.Pressed)	{ cfg.Yaw -= 0.01f;		  }
+			if (gps.Buttons.RightShoulder  == ButtonState.Pressed)	{ cfg.Yaw += 0.01f;		  }
 
 
 			float thrust	= gps.Triggers.Right;
@@ -152,23 +132,20 @@ namespace Simulator {
 			var up			= worldTransform.Up;
 			var omega		= Vector3.Cross( up, ( up - oldUp ) / dt );
 			var localOmega	= Vector3.TransformNormal( omega, Matrix.Invert(worldTransform) );
+			var localOmegaA	= (oldLocalOmega - localOmega) / (dt+0.00001f);
+			oldLocalOmega	= localOmega;
 			oldUp			= up;
 
 			var targetUp	= Vector3.TransformNormal( Vector3.Up, Matrix.Invert(worldTransform) );
 
-			if (thrust<=0.02f) {
-				integralDrift += Vector3.Cross( targetUp, Vector3.Up ) * dt;
-				integralDriftTime += dt;
-			} else {
-				integralNormal += Vector3.Cross( targetUp, Vector3.Up ) * dt;
-				if (integralDriftTime>0.0001) {
-					integralNormal -= integralDrift / integralDriftTime * dt;
-				}
-			}
 
-			var torque		= cfg.StabK * Vector3.Cross( targetUp, Vector3.Up )
-							+ cfg.StabD * (float)Math.Exp( -localOmega.LengthSquared() ) * localOmega
-							+ cfg.StabI * integralNormal;
+
+			var torque		= (Vector3.Cross( targetUp, Vector3.Up )) * cfg.StabK
+							+ (localOmega) * cfg.StabD
+							+ (localOmegaA) * cfg.StabI;
+
+
+
 
 			var e1			= 0.15f * ( new Vector3( -1, 0, +1 ).Normalized() );
 			var e2			= 0.15f * ( new Vector3( +1, 0, +1 ).Normalized() );
@@ -177,36 +154,20 @@ namespace Simulator {
 			var f2			= Vector3.Dot( e1, torque ); 
 
 			//var testTorq	= e1 * f1 + e2 * f2 + e3 * f3 + e4 * f4;
+			float ctrlRoll	= ( cfg.ControlFactor    * gps.ThumbSticks.Right.X + cfg.TrimRoll  );
+			float ctrlPitch	= ( cfg.ControlFactor    * gps.ThumbSticks.Right.Y + cfg.TrimPitch );
+			float ctrlYaw	= ( cfg.ControlFactorYaw * gps.ThumbSticks.Left.X  + cfg.TrimYaw   );
 
-			float t1		= MathHelper.Clamp( thrust + f1, 0, 1 ) + cfg.TrimRoll + cfg.TrimPitch + cfg.TrimYaw;
-			float t2		= MathHelper.Clamp( thrust + f2, 0, 1 ) + cfg.TrimRoll - cfg.TrimPitch - cfg.TrimYaw;
-			float t3		= MathHelper.Clamp( thrust - f1, 0, 1 ) - cfg.TrimRoll - cfg.TrimPitch + cfg.TrimYaw;
-			float t4		= MathHelper.Clamp( thrust - f2, 0, 1 ) - cfg.TrimRoll + cfg.TrimPitch - cfg.TrimYaw;//*/
+			float t1		= MathHelper.Clamp( thrust + f1, 0, 1 ) - ctrlRoll - ctrlPitch + ctrlYaw;
+			float t2		= MathHelper.Clamp( thrust + f2, 0, 1 ) - ctrlRoll + ctrlPitch - ctrlYaw;
+			float t3		= MathHelper.Clamp( thrust - f1, 0, 1 ) + ctrlRoll + ctrlPitch + ctrlYaw;
+			float t4		= MathHelper.Clamp( thrust - f2, 0, 1 ) + ctrlRoll - ctrlPitch - ctrlYaw;//*/
 
 
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( torque	 , worldTransform  ), Color.Red );
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( omega	 , worldTransform  ), Color.Yellow );
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( targetUp , worldTransform  ), Color.Blue );
-			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( integralNormal , worldTransform  ), Color.Magenta );
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( up		 , Matrix.Identity ), Color.Green );
-
-			/*if (logWriter!=null) {
-			    if (firstLine) {
-			        logWriter.WriteLine("# TX TY TZ   UpX UpY UpZ");
-			        firstLine = false;	
-			    }
-
-			    logWriter.WriteLine("{0} {1} {2}   {3} {4} {5}   {6} {7} {8}   {9}   {10} {11} {12} {13}   {14} {15} {16} {17}",	
-			        worldTransform.Translation.X, worldTransform.Translation.Y, worldTransform.Translation.Z, 
-			        yaw, pitch, roll,
-			        vYaw, vPitch, vRoll,
-			        thrust, 
-			        t1, t2, t3, t4, 
-			        Rotor1, Rotor2, Rotor3, Rotor4 );
-			} */
-			
-
-		#endif
 
 			Rotor1	=	(int) ( 50 + 80 * t1 );
 			Rotor2	=	(int) ( 50 + 80 * t2 );
@@ -236,6 +197,7 @@ namespace Simulator {
 		}
 
 
+
 		Queue<int> rotor1Delay = new Queue<int>();
 		Queue<int> rotor2Delay = new Queue<int>();
 		Queue<int> rotor3Delay = new Queue<int>();
@@ -244,6 +206,10 @@ namespace Simulator {
 		float angle1 = 0, angle2 = 0, angle3 = 0, angle4 = 0;
 		float F1 = 0, F2 = 0, F3 = 0, F4 = 0;
 
+		/// <summary>
+		/// Updates kinematic state of real or virtual quad-rotor
+		/// </summary>
+		/// <param name="dt"></param>
 		public void UpdateFromTracker (float dt)
 		{
 			var cfg = game.GetService<Settings>().Configuration;
@@ -275,8 +241,19 @@ namespace Simulator {
 
 				if (box==null) {
 					box = new Box(Vector3.Zero, 0.4f, 0.07f, 0.4f, 0.580f );
+					box.PositionUpdateMode = PositionUpdateMode.Continuous;
 					world.Space.Add( box );
 					world.Drawer.Add( box );
+					box.AngularDamping = 0;
+					box.LinearDamping = 0;
+				}
+
+				var gps = GamePad.GetState(0);
+
+				if (gps.Buttons.X==ButtonState.Pressed) {
+					box.WorldTransform = Matrix.Identity;
+					box.LinearVelocity = Vector3.Zero;
+					box.AngularVelocity = Vector3.Zero;
 				}
 
 				rotor1Delay.Enqueue( Rotor1 );
@@ -312,8 +289,16 @@ namespace Simulator {
 				ApplyForceLL( ref box, dt, new Vector3(-1, 0, 1 ) * 0.15f, new Vector3( 0.01f, 1.0f,-0.02f).Normalized() * F3 ); 
 				ApplyForceLL( ref box, dt, new Vector3(-1, 0,-1 ) * 0.15f, new Vector3(-0.02f, 1.0f, 0.01f).Normalized() * F4 ); 
 
+				ApplyLocalTorque( ref box, dt,  Vector3.Up * F1 * 0.02f );
+				ApplyLocalTorque( ref box, dt, -Vector3.Up * F2 * 0.02f );
+				ApplyLocalTorque( ref box, dt,  Vector3.Up * F3 * 0.02f );
+				ApplyLocalTorque( ref box, dt, -Vector3.Up * F4 * 0.02f );
+
+
 				worldTransform	=	
-					Matrix.CreateFromYawPitchRoll( 0.033f, 0.021f, -0.029f ) * box.WorldTransform;
+					Matrix.CreateFromYawPitchRoll( 0.033f, 0.021f, -0.029f ) * 
+					Matrix.CreateTranslation( 0.01f, 0.004f, -0.009f ) * 
+					box.WorldTransform;
 			}
 
 		}
@@ -489,6 +474,14 @@ namespace Simulator {
 
 			Console.WriteLine("Communication thread aborted.");
 		}
+
+
+		void ApplyLocalTorque ( ref Box box, float dt, Vector3 torque )
+		{
+			ApplyForceLL( ref box, dt, Vector3.Right, Vector3.Cross( Vector3.Right, torque ) );
+			ApplyForceLL( ref box, dt, Vector3.Left,  Vector3.Cross( Vector3.Left,  torque ) );
+		}
+
 
 		void ApplyForceLL ( ref Box box, float dt, Vector3 point, Vector3 localForce )
 		{

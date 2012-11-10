@@ -53,8 +53,6 @@
 			this.trackBar5 = new System.Windows.Forms.TrackBar();
 			this.label1 = new System.Windows.Forms.Label();
 			this.button2 = new System.Windows.Forms.Button();
-			this.button1 = new System.Windows.Forms.Button();
-			this.trackBar6 = new System.Windows.Forms.TrackBar();
 			this.menuStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
@@ -65,7 +63,6 @@
 			((System.ComponentModel.ISupportInitialize)(this.trackBar3)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar4)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar5)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.trackBar6)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// menuStrip1
@@ -309,35 +306,11 @@
 			this.button2.UseVisualStyleBackColor = true;
 			this.button2.Click += new System.EventHandler( this.button2_Click );
 			// 
-			// button1
-			// 
-			this.button1.Location = new System.Drawing.Point( 333, 527 );
-			this.button1.Name = "button1";
-			this.button1.Size = new System.Drawing.Size( 147, 73 );
-			this.button1.TabIndex = 17;
-			this.button1.Text = "button1";
-			this.button1.UseVisualStyleBackColor = true;
-			this.button1.Click += new System.EventHandler( this.button1_Click_1 );
-			// 
-			// trackBar6
-			// 
-			this.trackBar6.LargeChange = 50;
-			this.trackBar6.Location = new System.Drawing.Point( 333, 434 );
-			this.trackBar6.Maximum = 1000;
-			this.trackBar6.Name = "trackBar6";
-			this.trackBar6.Size = new System.Drawing.Size( 166, 45 );
-			this.trackBar6.SmallChange = 10;
-			this.trackBar6.TabIndex = 18;
-			this.trackBar6.TickFrequency = 50;
-			this.trackBar6.Scroll += new System.EventHandler( this.trackBar6_Scroll );
-			// 
 			// ControlPanel
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF( 6F, 13F );
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size( 511, 718 );
-			this.Controls.Add( this.trackBar6 );
-			this.Controls.Add( this.button1 );
 			this.Controls.Add( this.button2 );
 			this.Controls.Add( this.label1 );
 			this.Controls.Add( this.trackBar5 );
@@ -363,7 +336,6 @@
 			((System.ComponentModel.ISupportInitialize)(this.trackBar3)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar4)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar5)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.trackBar6)).EndInit();
 			this.ResumeLayout( false );
 			this.PerformLayout();
 
@@ -398,8 +370,6 @@
 		public System.Windows.Forms.TrackBar trackBar5;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Button button2;
-		private System.Windows.Forms.Button button1;
-		public System.Windows.Forms.TrackBar trackBar6;
 
 	}
 }
