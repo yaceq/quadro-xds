@@ -1,5 +1,6 @@
 using System;
 using Misc;
+using System.Windows.Forms;
 
 namespace Simulator {
 #if WINDOWS || XBOX
@@ -11,6 +12,9 @@ namespace Simulator {
         static void Main(string[] args)
         {
 			Core.InitEnvironment();
+
+			Application.EnableVisualStyles();
+			Application.SetCompatibleTextRenderingDefault( false );
 
             using (SimulatorGame game = new SimulatorGame())
             {

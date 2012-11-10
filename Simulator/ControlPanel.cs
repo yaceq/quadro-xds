@@ -183,7 +183,7 @@ namespace Simulator {
 
 			if (q.logWriter==null) {
 
-				string name = string.Format("{0}_{1:yyyy_MM_dd_HH_mm_ss}.log", q.Name, DateTime.Now);
+				string name = string.Format("{0}_{1:yyyyMMdd_HHmmss}.log", q.Name, DateTime.Now);
 				q.logWriter = new StreamWriter( name, false );
 				q.firstLine	= true;
 
@@ -204,16 +204,7 @@ namespace Simulator {
 		private void button1_Click_1 ( object sender, EventArgs e )
 		{
 			var q = game.GetService<World>().quadrocopters[0];
-			q.integralNormal = Vector3.Zero;
-			q.integralDrift  = Vector3.Zero;
-			q.integralDriftTime = 0;
 			q.box.WorldTransform	=	Matrix.Identity;
-		}
-
-		private void trackBar6_Scroll ( object sender, EventArgs e )
-		{
-			var q = game.GetService<World>().quadrocopters[0];
-			q.thrustTest2 =  trackBar6.Value / 1000.0f;
 		}
 
 	}

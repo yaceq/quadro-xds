@@ -50,6 +50,8 @@ namespace Simulator {
 		[Category("Stabiliazation")]	public float		TrimYaw { set; get; }
 		[Category("Stabiliazation")]	public float		TrimRoll { set; get; }
 		[Category("Stabiliazation")]	public float		TrimPitch { set; get; }
+		[Category("Stabiliazation")]	public float		ControlFactor { set; get; }
+		[Category("Stabiliazation")]	public float		ControlFactorYaw { set; get; }
 
 		public enum CameraModes {
 			BoundToQuadrocopter,
