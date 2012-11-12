@@ -96,7 +96,7 @@ namespace Simulator {
 
 		bool	targetPointMode = false;
 
-		float	
+		Vector3	oldForward = Vector3.Forward;
 
 		/// <summary>
 		/// Updates intire state of the quad-rotor
@@ -172,8 +172,11 @@ namespace Simulator {
 
 			float thrust	= gps.Triggers.Right;
 			var up			= worldTransform.Up;
+			var forward		= worldTransform.Forward.Flattern(Vector3.Up);
 
 			var aimUpVector	= Vector3.Up;	
+
+			var addTorque	= Vector3.Zero;
 
 			if ( targetPointMode ) {
 
@@ -187,13 +190,26 @@ namespace Simulator {
 
 				var	offset	=	position - cfg.TargetPoint;
 
+				offset.ClampLength(1);
+
 				thrust		=	cfg.TakeoffThrust + ( offset.Y * cfg.StabAltitudeK  + velocity.Y * cfg.StabAltitudeD );
 
-				var	upShift	=	offset * cfg.StabPointK + velocity * cfg.StabPointD;
+				var	upShift	=	offset * cfg.StabPointK 
+							+	velocity * ( cfg.StabPointD )
+							+	cfg.StabPointI * acceleration;
 
-				aimUpVector +=	upShift.Flattern(Vector3.Up).ClampLength(0.3f);
+				/*if (velocity.Length()>5) {
+					upShift =	Vector3.Zero;
+				} */
 
-				thrust *= aimUpVector.Length();
+				aimUpVector +=	upShift.Flattern(Vector3.Up);//.ClampLength(0.7f);
+				//thrust *= aimUpVector.Length();
+				aimUpVector.Normalize();
+
+				thrust /= MathHelper.Clamp(up.Y, 0.6f, 1);
+				//addTorque.Z	=	-upShift.X;
+				//addTorque.X	=	 upShift.Z;
+				//addTorque	=	Vector3.TransformNormal( addTorque, Matrix.Invert(worldTransform) );
 			}
 
 
@@ -213,7 +229,7 @@ namespace Simulator {
 
 			var torque		= (Vector3.Cross( targetUp, Vector3.Up )) * cfg.StabK
 							+ (localOmega) * cfg.StabD
-							+ (localOmegaA) * cfg.StabI;
+							+ addTorque;
 
 
 			var e1			= 0.15f * ( new Vector3( -1, 0, +1 ).Normalized() );
@@ -228,9 +244,15 @@ namespace Simulator {
 			float ctrlYaw	= ( cfg.ControlFactorYaw * gps.ThumbSticks.Left.X  + cfg.TrimYaw   );
 
 			if ( targetPointMode ) {
-				float worldTransform.Right
-				ctrlYaw
+				float yawVel		=	Vector3.Dot( Vector3.Up, Vector3.Cross( forward, ( forward - oldForward ) / dt ) );
+
+				var targetForward	=	Vector3.TransformNormal( cfg.TargetVector, Matrix.Invert(worldTransform) );
+
+				float yawDist		=	Vector3.Dot( Vector3.Up, Vector3.Cross( targetForward, Vector3.Forward ) );
+
+				ctrlYaw				=	cfg.StabYawK * yawDist + cfg.StabYawD * yawVel;
 			}
+			oldForward = forward;
 
 			float t1		= MathHelper.Clamp( thrust + f1, 0, 1 ) - ctrlRoll - ctrlPitch + ctrlYaw;
 			float t2		= MathHelper.Clamp( thrust + f2, 0, 1 ) - ctrlRoll + ctrlPitch - ctrlYaw;
