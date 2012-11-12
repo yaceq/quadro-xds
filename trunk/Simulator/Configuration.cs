@@ -45,12 +45,15 @@ namespace Simulator {
 
 		[Category("Stabiliazation")]	public float		StabK { set; get; }
 		[Category("Stabiliazation")]	public float		StabD { set; get; }
-		[Category("Stabiliazation")]	public float		StabI { set; get; }
+
+		[Category("Stabiliazation")]	public float		StabYawK { set; get; }
+		[Category("Stabiliazation")]	public float		StabYawD { set; get; }
 
 		[Category("Stabiliazation")]	public float		StabAltitudeD { set; get; }
 		[Category("Stabiliazation")]	public float		StabAltitudeK { set; get; }
 		[Category("Stabiliazation")]	public float		StabPointD { set; get; }
 		[Category("Stabiliazation")]	public float		StabPointK { set; get; }
+		[Category("Stabiliazation")]	public float		StabPointI { set; get; }
 		[Category("Stabiliazation")]	public float		TakeoffThrust { set; get; }
 
 		[Category("Stabiliazation")]	public float		TrimYaw { set; get; }

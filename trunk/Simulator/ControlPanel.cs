@@ -113,7 +113,7 @@ namespace Simulator {
 
         void listBox1_Click(object sender, System.EventArgs e)
         {
-            quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopters[listBox1.SelectedIndex];
+            //quadrocopterPropertyGrid.SelectedObject = game.GetService<World>().quadrocopters[listBox1.SelectedIndex];
         }
 
 
