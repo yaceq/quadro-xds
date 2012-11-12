@@ -166,11 +166,6 @@ namespace Simulator {
 			com6Thread.Start();
 		}
 
-		private void button1_Click ( object sender, EventArgs e )
-		{
-			game.GetService<World>().quadrocopters[0].RunTakeoffThrustEstimation();
-		}
-
 		private void trackBar5_Scroll ( object sender, EventArgs e )
 		{
 			label1.Text = "Thrust = " + trackBar5.Value.ToString();
