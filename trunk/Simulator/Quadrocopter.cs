@@ -53,9 +53,11 @@ namespace Simulator {
 		World	world;
 		Matrix	worldTransform;
 
+		SerialPort 	port;
 		public StreamWriter	logWriter = null;
 		public bool firstLine = false;
 
+		bool engineCut = false;
 
 
 		public Quadrocopter( Game game, World world, Vector3 position, string name )
@@ -85,7 +87,16 @@ namespace Simulator {
 
 		public float thrustTest2 = 0;
 		public Vector3 oldLocalOmega = Vector3.Zero;
+		Vector3 oldPosition;
+		Vector3	oldVelocity;
 
+		bool	getTakeoffThrust = true;
+		Vector3	landingPoint;
+		float	takeoffThrust;
+
+		bool	targetPointMode = false;
+
+		float	
 
 		/// <summary>
 		/// Updates intire state of the quad-rotor
@@ -97,8 +108,34 @@ namespace Simulator {
 			var cfg = game.GetService<Settings>().Configuration;
 			var dr	= game.GetService<DebugRender>();
 
+			if (port==null) {
+				ds.Add( string.Format( "{0} disconnected", Name ), Color.Red );
+			} else {
+				ds.Add( string.Format( "{0} connected on {1}", Name, port.PortName ), Color.Yellow );
+			}
+
+			if (engineCut) {
+				ds.Add( "Engine cut", Color.Red );
+			}
+
+			if (getTakeoffThrust) {
+				ds.Add( "Takeoff thrust required", Color.Red );
+			} else {
+				ds.Add( "Takeoff thrust " + takeoffThrust.ToString(), Color.White );
+			}
+
+			if (targetPointMode) {
+				ds.Add( "Target point", Color.LightYellow );
+			}
+
+			//
+			//	Tracker/Simulation update :
+			//
 			UpdateFromTracker(dt);
 
+			//
+			//	Stabilization :
+			//
 			float yaw, pitch, roll;
 			worldTransform.ToAngles( out yaw, out pitch, out roll );
 
@@ -114,6 +151,11 @@ namespace Simulator {
 			oldPitch = pitch;
 			oldRoll  = roll;
 
+			Vector3	position		=	worldTransform.Translation;
+			Vector3	velocity		=	( position - oldPosition ) / dt;
+			Vector3 acceleration	=	( velocity - oldVelocity ) / dt;
+			oldVelocity				=	velocity;
+			oldPosition				=	position;
 
 			var gps = GamePad.GetState(0);
 
@@ -123,28 +165,55 @@ namespace Simulator {
 			if (gps.DPad.Down  == ButtonState.Pressed)				{ cfg.TrimPitch += 0.01f; }
 			if (gps.Buttons.LeftShoulder   == ButtonState.Pressed)	{ cfg.Yaw -= 0.01f;		  }
 			if (gps.Buttons.RightShoulder  == ButtonState.Pressed)	{ cfg.Yaw += 0.01f;		  }
+			if (gps.Buttons.Y  == ButtonState.Pressed)				{ targetPointMode = true; }
+			if (gps.Buttons.X  == ButtonState.Pressed)				{ targetPointMode = false	; }
+			if (gps.Buttons.B  == ButtonState.Pressed)				{ targetPointMode = false	; }
 
 
 			float thrust	= gps.Triggers.Right;
-
-			if (thrustTest2>0.02) thrust = thrustTest2;
-
 			var up			= worldTransform.Up;
+
+			var aimUpVector	= Vector3.Up;	
+
+			if ( targetPointMode ) {
+
+				if (cfg.TargetVector==Vector3.Zero) {
+					cfg.TargetVector = Vector3.Forward;
+				}
+				cfg.TargetVector = cfg.TargetVector.Flattern( Vector3.Up ).Normalized();
+
+				dr.DrawRing( cfg.TargetPoint, 0.3f, Color.Yellow );
+				dr.DrawVector( cfg.TargetPoint, cfg.TargetVector * 1.33f, Color.Yellow );
+
+				var	offset	=	position - cfg.TargetPoint;
+
+				thrust		=	cfg.TakeoffThrust + ( offset.Y * cfg.StabAltitudeK  + velocity.Y * cfg.StabAltitudeD );
+
+				var	upShift	=	offset * cfg.StabPointK + velocity * cfg.StabPointD;
+
+				aimUpVector +=	upShift.Flattern(Vector3.Up).ClampLength(0.3f);
+
+				thrust *= aimUpVector.Length();
+			}
+
+
+			if (up.Y<0) {
+				thrust = 0;
+			}
+
 			var omega		= Vector3.Cross( up, ( up - oldUp ) / dt );
 			var localOmega	= Vector3.TransformNormal( omega, Matrix.Invert(worldTransform) );
 			var localOmegaA	= (oldLocalOmega - localOmega) / (dt+0.00001f);
 			oldLocalOmega	= localOmega;
 			oldUp			= up;
 
-			var targetUp	= Vector3.TransformNormal( Vector3.Up, Matrix.Invert(worldTransform) );
+			var targetUp	= Vector3.TransformNormal( aimUpVector, Matrix.Invert(worldTransform) );
 
 
 
 			var torque		= (Vector3.Cross( targetUp, Vector3.Up )) * cfg.StabK
 							+ (localOmega) * cfg.StabD
 							+ (localOmegaA) * cfg.StabI;
-
-
 
 
 			var e1			= 0.15f * ( new Vector3( -1, 0, +1 ).Normalized() );
@@ -158,6 +227,11 @@ namespace Simulator {
 			float ctrlPitch	= ( cfg.ControlFactor    * gps.ThumbSticks.Right.Y + cfg.TrimPitch );
 			float ctrlYaw	= ( cfg.ControlFactorYaw * gps.ThumbSticks.Left.X  + cfg.TrimYaw   );
 
+			if ( targetPointMode ) {
+				float worldTransform.Right
+				ctrlYaw
+			}
+
 			float t1		= MathHelper.Clamp( thrust + f1, 0, 1 ) - ctrlRoll - ctrlPitch + ctrlYaw;
 			float t2		= MathHelper.Clamp( thrust + f2, 0, 1 ) - ctrlRoll + ctrlPitch - ctrlYaw;
 			float t3		= MathHelper.Clamp( thrust - f1, 0, 1 ) + ctrlRoll + ctrlPitch + ctrlYaw;
@@ -169,6 +243,9 @@ namespace Simulator {
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( targetUp , worldTransform  ), Color.Blue );
 			dr.DrawVector( worldTransform.Translation, Vector3.TransformNormal( up		 , Matrix.Identity ), Color.Green );
 
+			dr.DrawVector( worldTransform.Translation, velocity,		Color.CornflowerBlue );
+			dr.DrawVector( worldTransform.Translation, acceleration,	Color.DarkGoldenrod );
+
 			Rotor1	=	(int) ( 50 + 80 * t1 );
 			Rotor2	=	(int) ( 50 + 80 * t2 );
 			Rotor3	=	(int) ( 50 + 80 * t3 );
@@ -176,10 +253,16 @@ namespace Simulator {
 			
 			bool  engine	= thrust > 0.02f;
 
+			ds.Add(string.Format("Engine: {0,3} {1,3} {2,3} {3,3}",  Rotor1, Rotor2, Rotor3, Rotor4) );
+
 			if (!engine) {
 				Rotor1 = Rotor2 = Rotor3 = Rotor4 = 0;
 			}
 
+
+			//
+			//	LOG :
+			//
 			if (logWriter!=null) {
 			    if (firstLine) {
 			        logWriter.WriteLine("# X Y Z   Yaw Pitch Roll   VYaw VPitch VRoll   Thrust   T1 T2 T3 T4   F1 F2 F3 F4");
@@ -193,6 +276,41 @@ namespace Simulator {
 			        thrust, 
 			        t1, t2, t3, t4, 
 			        F1, F2, F3, F4 );
+			}
+
+			//
+			//	BT communication :
+			//
+			if (port!=null) {
+				try {
+					if ( GamePad.GetState(0).IsButtonDown( Buttons.B ) ) {
+						engineCut = true;
+					}
+					if ( GamePad.GetState(0).IsButtonDown( Buttons.A ) ) {
+						engineCut = false;
+					}
+
+					if ( game.GetService<World>().Tracker==null || !TrackObject ) {
+						engineCut = true;
+					}
+
+					if (engineCut) {
+						Rotor1 = Rotor2 = Rotor3 = Rotor4 = 10;
+					}
+					//if (ThrustTest>0) {
+					//    Rotor1 = Rotor2 = Rotor3 = Rotor4 = ThrustTest;
+					//}
+					Rotor1 = Math.Min(180, Math.Max( Rotor1, 10 ));
+					Rotor2 = Math.Min(180, Math.Max( Rotor2, 10 ));
+					Rotor3 = Math.Min(180, Math.Max( Rotor3, 10 ));
+					Rotor4 = Math.Min(180, Math.Max( Rotor4, 10 ));
+					string s = string.Format("X{0,2:X2}{1,2:X2}{2,2:X2}{3,2:X2}\n", (byte)Rotor1, (byte)Rotor2, (byte)Rotor3, (byte)Rotor4 );
+
+					port.Write( s );
+
+				} catch ( Exception e ) {
+					StopCommunicationProtocol();
+				}
 			}
 		}
 
@@ -213,7 +331,12 @@ namespace Simulator {
 		public void UpdateFromTracker (float dt)
 		{
 			var cfg = game.GetService<Settings>().Configuration;
+			var ds	= game.GetService<DebugStrings>();
+
 			if ( TrackObject && world.Tracker!=null ) {
+
+				ds.Add("Tracked : " + Name, Color.Yellow );
+
 				var frame = world.Tracker.GetFrame();
 				if (frame==null) {
 					return;
@@ -238,6 +361,8 @@ namespace Simulator {
 			}
 
 			if (cfg.UseSimulation) {
+
+				ds.Add("Simulated : " + Name, Color.Yellow );
 
 				if (box==null) {
 					box = new Box(Vector3.Zero, 0.4f, 0.07f, 0.4f, 0.580f );
@@ -305,64 +430,6 @@ namespace Simulator {
 
 
 
-		Thread takeofThread;
-
-		public void RunTakeoffThrustEstimation() {
-			takeofThread = new Thread( TakeoffThrustEstimation );
-			takeofThread.Start();
-		}
-
-
-		public void TakeoffThrustEstimation ()
-		{
-			float currentHeight = Vector3.Dot( worldTransform.Translation, Vector3.Up );
-
-			Console.WriteLine("Takeoff thrust estimation procedure");
-
-			bool raising = true;
-
-			lock (this) {
-				Rotor1 = Rotor2 = Rotor3 = Rotor4 = 12;
-			}
-
-			Console.WriteLine("Thrust set to zero");
-			Thread.Sleep(2000);
-			
-
-			while (true) {
-
-				Thread.Sleep(50);
-
-				lock (this) {
-					
-					Rotor1 = Rotor1 + ( raising ? 1 : -50 );
-					Rotor2 = Rotor1;
-					Rotor3 = Rotor1;
-					Rotor4 = Rotor1;
-
-					Console.WriteLine("Thrust : {0}", Rotor1);
-
-					float height = Vector3.Dot( worldTransform.Translation, Vector3.Up );
-					if ( (height - currentHeight) > 0.02 && raising ) {
-						raising = false;
-						Console.WriteLine( "Takeoff thrust detected : {0}", Rotor1 );
-					}
-
-					if (Rotor1>179) {
-						raising = false;
-						Console.WriteLine( "Unable to takeoff!" );
-					}
-				}
-
-				if (Rotor1<=10) {
-					break;
-				}
-			}
-
-			Console.WriteLine("Done");
-		}
-
-
 		float	rot1 = 3121 % 360;
 		float	rot2 = 1135 % 360;
 		float	rot3 = 6546 % 360;
@@ -370,7 +437,6 @@ namespace Simulator {
 
 		public void Draw ( float dt, Matrix view, Matrix proj )
 		{
-
 			rot1 += Rotor1;
 			rot1 += Rotor2;
 			rot1 += Rotor3;
@@ -391,88 +457,27 @@ namespace Simulator {
 		
 
 
-		Thread  commThread;
-		bool	commAbortRequest = false;
-		SerialPort 	port;
-
-
 
 		public void RunCommunicationProtocol ()
 		{
-			commAbortRequest = false;
-			commThread = new Thread( CommunicationThreadFunc );
-			commThread.Start();
+			var cfg = game.GetService<Settings>().Configuration;
+
+			Console.WriteLine("Port " + cfg.Port);
+
+			port = new SerialPort( cfg.Port, cfg.BaudRate );
+			port.ReadTimeout = SerialPort.InfiniteTimeout;
+			port.Open();
+
+			Console.WriteLine("Opened.");
 		}
 
 
 
 		public void StopCommunicationProtocol ()
 		{
-			commAbortRequest = true;
-			//commThread.
-		}
-
-
-
-		void CommunicationThreadFunc ()
-		{
-			bool engineCut = false;
-
-			Console.WriteLine("Communication thread started.");
-
-			try {
-
-				var cfg = game.GetService<Settings>().Configuration;
-
-				Console.WriteLine("Port " + cfg.Port);
-
-				port = new SerialPort( cfg.Port, cfg.BaudRate );
-				port.ReadTimeout = SerialPort.InfiniteTimeout;
-				port.Open();
-
-				Console.WriteLine("Opened.");
-
-				//byte[] buf = new byte[7];
-				string s;
-
-				while (!commAbortRequest) {
-
-					if ( GamePad.GetState(0).IsButtonDown( Buttons.B ) ) {
-						engineCut = true;
-					}
-					if ( GamePad.GetState(0).IsButtonDown( Buttons.A ) ) {
-						engineCut = false;
-					}
-
-					if ( game.GetService<World>().Tracker==null || !TrackObject ) {
-						engineCut = true;
-					}
-
-					lock (this) {
-						if (engineCut) {
-							Rotor1 = Rotor2 = Rotor3 = Rotor4 = 10;
-						}
-						//if (ThrustTest>0) {
-						//    Rotor1 = Rotor2 = Rotor3 = Rotor4 = ThrustTest;
-						//}
-						Rotor1 = Math.Min(180, Math.Max( Rotor1, 10 ));
-						Rotor2 = Math.Min(180, Math.Max( Rotor2, 10 ));
-						Rotor3 = Math.Min(180, Math.Max( Rotor3, 10 ));
-						Rotor4 = Math.Min(180, Math.Max( Rotor4, 10 ));
-						s = string.Format("X{0,2:X2}{1,2:X2}{2,2:X2}{3,2:X2}\n", (byte)Rotor1, (byte)Rotor2, (byte)Rotor3, (byte)Rotor4 );
-					}
-
-					port.Write( s );
-					Thread.Sleep(30);
-				}
-
-			} catch (Exception ex) {
-				Forms.MessageBox.Show( ex.Message );
-				commAbortRequest = true;
-				return;
-			}
-
-			Console.WriteLine("Communication thread aborted.");
+			port.Close();
+			port.Dispose();
+			port = null;
 		}
 
 

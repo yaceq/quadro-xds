@@ -47,11 +47,20 @@ namespace Simulator {
 		[Category("Stabiliazation")]	public float		StabD { set; get; }
 		[Category("Stabiliazation")]	public float		StabI { set; get; }
 
+		[Category("Stabiliazation")]	public float		StabAltitudeD { set; get; }
+		[Category("Stabiliazation")]	public float		StabAltitudeK { set; get; }
+		[Category("Stabiliazation")]	public float		StabPointD { set; get; }
+		[Category("Stabiliazation")]	public float		StabPointK { set; get; }
+		[Category("Stabiliazation")]	public float		TakeoffThrust { set; get; }
+
 		[Category("Stabiliazation")]	public float		TrimYaw { set; get; }
 		[Category("Stabiliazation")]	public float		TrimRoll { set; get; }
 		[Category("Stabiliazation")]	public float		TrimPitch { set; get; }
 		[Category("Stabiliazation")]	public float		ControlFactor { set; get; }
 		[Category("Stabiliazation")]	public float		ControlFactorYaw { set; get; }
+
+		[Category("Stabiliazation")]	public Vector3		TargetPoint { set; get; }
+		[Category("Stabiliazation")]	public Vector3		TargetVector { set; get; }
 
 		public enum CameraModes {
 			BoundToQuadrocopter,
@@ -74,6 +83,8 @@ namespace Simulator {
 			Distance	=	3;
 
 			UseSimulation	=	true;
+
+			TargetPoint	=	Vector3.Up * 0.5f;
 		}
 	}
 }
