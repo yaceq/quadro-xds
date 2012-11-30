@@ -1,5 +1,7 @@
+#define SVT
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -18,6 +20,7 @@ using BEPUphysics.CollisionShapes.ConvexShapes;
 using BEPUphysicsDrawer.Models;
 using BEPUphysics.Entities.Prefabs;
 using BEPUphysics.EntityStateManagement;
+using BEPUphysics.MathExtensions;
 using System.Runtime.InteropServices;
 using Misc;
 
@@ -71,7 +74,7 @@ namespace Simulator {
 		public override void Initialize ()
 		{
 			space		=	new Space();
-			space.ForceUpdater.Gravity = Vector3.Down * 9.8f;
+			space.ForceUpdater.Gravity = Vector3.Down * 9.80665f;
 
 			drawer		=	new BruteModelDrawer( this.Game );
 			drawer.IsWireframe = true;
@@ -225,6 +228,16 @@ namespace Simulator {
 
 			foreach (var quadrocop in quadrocopters) {
 				quadrocop.Update(dt);
+
+#if SVT
+                quadrocop.AddGeneralForce(5.687857f, new Vector3(0.0005f, 0.0f, 0.0005f));
+                //Нормировочный коэффициет 26.52f по X- разобраться откуда!
+                //Нормировочный коэффициет 26.52f по Z- разобраться откуда!
+                var back_momentum = new Vector3(-0.0005f, 0, -0.0005f) * 26.52f;
+                back_momentum = Vector3.TransformNormal(back_momentum, Matrix.Invert(quadrocop.box.WorldTransform));
+                quadrocop.testApplyMomentum(ref back_momentum, dt);
+                quadrocop.testApplyCForce(new Vector3(0, 5.687857f, 0), dt);
+#endif
 			}
 
 
@@ -299,5 +312,159 @@ namespace Simulator {
 			base.Draw( gameTime );
 
 		}
+
 	}
+
+        public class QController
+    {
+
+        public QController(int history_len)
+        {   
+            posHistory   = new ArrayList(3);
+            velHistory   = new ArrayList(3);
+            rotHistory   = new ArrayList(3);
+            nHistory     = new ArrayList(3);
+            omegaHistory = new ArrayList(3);
+            forceHistory = new ArrayList(3);
+            stabK = new float[4];
+            stabK[0] = -20.0f;
+            stabK[1] = -40.0f;
+            stabK[2] = -25.01f;
+            stabK[3] = -10.01f;
+        }
+
+        public void setTarget(Vector3 targetPos)
+        { 
+            this.targetPos = targetPos;            
+        }
+
+        public Vector3 QVMultiply(Quaternion qt, Vector3 vec)
+        {
+            Quaternion q_res =  Quaternion.Multiply(qt, (new Quaternion(vec, 0.0f)));
+            return new Vector3(q_res.X, q_res.Y, q_res.Z);
+        }
+
+        public Vector3 QVMultiply(Vector3 vec, Quaternion qt)
+        {
+            Quaternion q_res = Quaternion.Multiply((new Quaternion(vec, 0.0f)), qt);
+            return new Vector3(q_res.X, q_res.Y, q_res.Z);
+        }
+
+        public Vector3 QuaternionToVector(Quaternion qt)
+        {            
+            return new Vector3(qt.X, qt.Y, qt.Z);
+        }
+
+        public void QControl(out Vector3 out_force, out Vector3 out_momentum, Matrix state, Matrix3X3 inertiaTensor, float dt)
+        {
+            //Вычсление относительного положения целевого состояния
+            
+            Quaternion  rotation = new Quaternion();            
+            Vector3     position = new Vector3();
+            Vector3     velocity = new Vector3();
+            Vector3     omega    = new Vector3();
+            Vector3     normal   = new Vector3();
+            Vector3     scale;
+
+            if (posHistory.Count >= 3)
+                posHistory.RemoveAt(0);
+
+            if (rotHistory.Count >= 3)
+                rotHistory.RemoveAt(0);
+
+            if (velHistory.Count >= 3)
+                velHistory.RemoveAt(0);
+
+            if (nHistory.Count >= 3)
+                nHistory.RemoveAt(0);
+
+            if (omegaHistory.Count >= 3)
+                omegaHistory.RemoveAt(0);
+
+            state.Decompose(out scale, out rotation, out position);
+            posHistory.Add(position);
+            rotHistory.Add(rotation);            
+            normal = Vector3.TransformNormal(Vector3.Up,state);
+            
+            nHistory.Add(normal);
+
+            if (posHistory.Count >= 2)
+            {
+                velocity = (position - (Vector3)posHistory[posHistory.Count - 2]) / dt;
+                velHistory.Add(velocity);
+            }
+            else
+                velHistory.Add(Vector3.Zero);
+
+            if (rotHistory.Count >= 2)
+            {
+                omega = QuaternionToVector(Quaternion.Multiply((rotation - (Quaternion)rotHistory[rotHistory.Count - 2]), Quaternion.Conjugate(rotation)));
+                omega = omega * (2 / dt);
+                omegaHistory.Add(omega);
+            }
+            else
+                omegaHistory.Add(Vector3.Zero);
+
+
+            if (true)
+            {
+                Vector3     deltaPosition = position - targetPos;
+                Vector3      force   = new Vector3();
+                Vector3 pred_normal  = new Vector3();
+                Vector3 pred_omega   = new Vector3();
+                Vector3   momentum   = new Vector3();
+
+                if (forceHistory.Count >= 3)
+                {
+                    force =
+                    (
+                          stabK[0] * deltaPosition
+                        + stabK[1] * velocity
+                        + stabK[2] / dt / dt * ((Vector3)posHistory[0] - 2 * (Vector3)posHistory[1] + (Vector3)posHistory[2])
+                        + stabK[3] / dt / dt * ((Vector3)velHistory[0] - 2 * (Vector3)velHistory[1] + (Vector3)velHistory[2])
+                    )
+                        * dt * dt
+                        + 2 * (Vector3)forceHistory[2] - (Vector3)forceHistory[1];
+
+
+                    forceHistory.Add(force);
+                    pred_normal = (force / force.Length());
+
+                    pred_omega =
+                       Vector3.Cross(pred_normal + (Vector3)nHistory[nHistory.Count - 1],
+                                     pred_normal - (Vector3)nHistory[nHistory.Count - 1])
+                                    / 2 / dt;
+
+                    Vector3 localOmegaPred = Vector3.TransformNormal(pred_omega, state);
+                    Vector3 localOmegaCurr = Vector3.TransformNormal((Vector3)omegaHistory[omegaHistory.Count - 1], state);
+
+                    Matrix inertiaTensor4X4 = Matrix3X3.ToMatrix4X4(inertiaTensor);
+                    momentum = Vector3.TransformNormal((localOmegaPred - localOmegaCurr) / dt, inertiaTensor4X4);          
+                    out_momentum = momentum;
+
+                    forceHistory.RemoveAt(0);
+                }
+                else
+                {
+                    forceHistory.Add(6.860f * Vector3.Up);
+                    out_momentum = Vector3.Zero;
+                }               
+                
+                out_force    = force;                
+            }
+        }
+
+        private ArrayList posHistory;
+        private ArrayList velHistory;
+        private ArrayList rotHistory;
+        private ArrayList nHistory;
+        private ArrayList omegaHistory;
+        private ArrayList forceHistory;
+           
+        private Matrix    targetState;
+        private Vector3   targetPos;        
+
+        private float[] stabK;
+    }
 }
+

@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define HG
+#define SVT
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +21,7 @@ using BEPUphysicsDrawer.Models;
 using BEPUphysics.Entities.Prefabs;
 using BEPUphysics.EntityStateManagement;
 using BEPUphysics.PositionUpdating;
+using BEPUphysics.MathExtensions;
 using Forms = System.Windows.Forms;
 //using ViconDataStreamSDK.DotNET;
 using System.IO.Ports;
@@ -58,6 +61,17 @@ namespace Simulator {
 		public bool firstLine = false;
 
 		bool engineCut = false;
+#if SVT
+        Vector3 local_angular_momentum = Vector3.Zero;
+          float lift_force = 0;
+        const float ROTOR_K1 = 1.0f;
+        const float ROTOR_K2 = 1.0f;
+        const float ROTOR_K3 = 1.0f;
+        const float ROTOR_K4 = 1.0f;
+
+        public Matrix EigenIntertiaTensor;
+#endif
+
 
 
 		public Quadrocopter( Game game, World world, Vector3 position, string name )
@@ -102,6 +116,61 @@ namespace Simulator {
 		/// Updates intire state of the quad-rotor
 		/// </summary>
 		/// <param name="dt"></param>
+        /// 
+#if SVT
+        public void AddGeneralForce(float force, Vector3 local_momentum)
+        {
+            local_angular_momentum += local_momentum;
+            lift_force += force;            
+        }
+
+        public void CleanGeneralForce()
+        {
+            local_angular_momentum = Vector3.Zero;
+            lift_force = 0;
+        }
+
+        private int powerToPdd(float pw)
+        {
+            float koeff = 0.404370225f;
+            if ((pw * koeff)<0)
+                return 0;
+            if ((pw * koeff)>1)
+                return 130;
+
+            return (int)(50 + 80 * pw * koeff); 
+        }
+
+        public bool GeneralForceToPDD(int[] pddArray)
+        {
+            if (box == null)
+                return true;
+            float[] pw_array = new float[4];
+            int avgPdd = powerToPdd(lift_force / 4); //(int)(50 + 80 * lift_force / 4 * koeff);            
+
+            float Im12_34 = Vector3.Dot(Vector3.TransformNormal(new Vector3(0, 0, 1), EigenIntertiaTensor),new Vector3 (0, 0, 1));
+            float Im14_23 = Vector3.Dot(Vector3.TransformNormal(new Vector3(1, 0, 0), EigenIntertiaTensor), new Vector3(1, 0, 0));
+
+            float m12_34 = Vector3.Dot(local_angular_momentum, new Vector3(0, 0, 1))/Im12_34;
+            float m14_23 = Vector3.Dot(local_angular_momentum, new Vector3(1, 0, 0))/Im14_23;
+
+            float arm = box.Length;
+
+            float diff_f_12_34 = m12_34 / arm;
+            float diff_f_14_23 = m14_23 / arm;         
+           
+            pw_array[0] = lift_force / 4 + diff_f_12_34 / 4 + diff_f_14_23 / 4;
+            pw_array[1] = lift_force / 4 + diff_f_12_34 / 4 - diff_f_14_23 / 4;
+            pw_array[2] = lift_force / 4 - diff_f_12_34 / 4 - diff_f_14_23 / 4;
+            pw_array[3] = lift_force / 4 - diff_f_12_34 / 4 + diff_f_14_23 / 4;
+
+            for (int i = 0; i < 4; i++)
+                pddArray[i] = powerToPdd(pw_array[i]);
+
+            return false;                  
+        }
+
+#endif
 		public void Update ( float dt )
 		{
 			var ds	= game.GetService<DebugStrings>();
@@ -131,11 +200,23 @@ namespace Simulator {
 			//
 			//	Tracker/Simulation update :
 			//
+            int[] pddArray = new int[4];
+            GeneralForceToPDD(pddArray); 
+
+            rotor1Delay.Enqueue(pddArray[0]);
+            rotor2Delay.Enqueue(pddArray[1]);
+            rotor3Delay.Enqueue(pddArray[2]);
+            rotor4Delay.Enqueue(pddArray[3]);
+
 			UpdateFromTracker(dt);
+            CleanGeneralForce();
+            
 
 			//
 			//	Stabilization :
 			//
+
+#if HG
 			float yaw, pitch, roll;
 			worldTransform.ToAngles( out yaw, out pitch, out roll );
 
@@ -334,6 +415,13 @@ namespace Simulator {
 					StopCommunicationProtocol();
 				}
 			}
+
+            rotor1Delay.Enqueue(Rotor1);
+            rotor2Delay.Enqueue(Rotor2);
+            rotor3Delay.Enqueue(Rotor3);
+            rotor4Delay.Enqueue(Rotor4);
+
+#endif
 		}
 
 
@@ -388,11 +476,13 @@ namespace Simulator {
 
 				if (box==null) {
 					box = new Box(Vector3.Zero, 0.4f, 0.07f, 0.4f, 0.580f );
+                    box.Position = new Vector3(0, 1.0f, 0);
 					box.PositionUpdateMode = PositionUpdateMode.Continuous;
 					world.Space.Add( box );
 					world.Drawer.Add( box );
 					box.AngularDamping = 0;
 					box.LinearDamping = 0;
+                    EigenIntertiaTensor = Matrix3X3.ToMatrix4X4(box.InertiaTensor);
 				}
 
 				var gps = GamePad.GetState(0);
@@ -403,11 +493,6 @@ namespace Simulator {
 					box.AngularVelocity = Vector3.Zero;
 				}
 
-				rotor1Delay.Enqueue( Rotor1 );
-				rotor2Delay.Enqueue( Rotor2 );
-				rotor3Delay.Enqueue( Rotor3 );
-				rotor4Delay.Enqueue( Rotor4 );
-
 				int r1,r2,r3,r4;
 				r1 = r2 = r3 = r4 = 0;
 
@@ -415,12 +500,18 @@ namespace Simulator {
 				while (rotor2Delay.Count>cfg.DelayFrames) { r2 = rotor2Delay.Dequeue();	}
 				while (rotor3Delay.Count>cfg.DelayFrames) { r3 = rotor3Delay.Dequeue();	}
 				while (rotor4Delay.Count>cfg.DelayFrames) { r4 = rotor4Delay.Dequeue();	}
-
+#if HG
 				float	f1	=	MathHelper.Clamp((r1 - 48) / 80.0f * ( 2.5f + 0.05f ), 0, float.MaxValue);
 				float	f2	=	MathHelper.Clamp((r2 - 51) / 81.0f * ( 2.5f - 0.02f ), 0, float.MaxValue);
 				float	f3	=	MathHelper.Clamp((r3 - 53) / 79.0f * ( 2.5f + 0.04f ), 0, float.MaxValue);
 				float	f4	=	MathHelper.Clamp((r4 - 49) / 82.0f * ( 2.5f - 0.03f ), 0, float.MaxValue);
-
+#endif
+#if SVT
+                float f1 = MathHelper.Clamp((r1 - 50) / 80.0f * (2.5f + 0.00f), 0, float.MaxValue);
+                float f2 = MathHelper.Clamp((r2 - 50) / 80.0f * (2.5f - 0.00f), 0, float.MaxValue);
+                float f3 = MathHelper.Clamp((r3 - 50) / 80.0f * (2.5f + 0.00f), 0, float.MaxValue);
+                float f4 = MathHelper.Clamp((r4 - 50) / 80.0f * (2.5f - 0.00f), 0, float.MaxValue);
+#endif
 				F1	=	MathHelper.Lerp( F1, f1, cfg.MotorLatency );
 				F2	=	MathHelper.Lerp( F2, f2, cfg.MotorLatency );
 				F3	=	MathHelper.Lerp( F3, f3, cfg.MotorLatency );
@@ -431,15 +522,27 @@ namespace Simulator {
 				angle3	+=	(float)Math.Sqrt( Math.Max(0, F3) );
 				angle4	+=	(float)Math.Sqrt( Math.Max(0, F4) );
 
+#if HG
 				ApplyForceLL( ref box, dt, new Vector3( 1, 0,-1 ) * 0.15f, new Vector3( 0.02f, 1.0f, 0.03f).Normalized() * F1 ); 
 				ApplyForceLL( ref box, dt, new Vector3( 1, 0, 1 ) * 0.15f, new Vector3(-0.03f, 1.0f,-0.04f).Normalized() * F2 ); 
 				ApplyForceLL( ref box, dt, new Vector3(-1, 0, 1 ) * 0.15f, new Vector3( 0.01f, 1.0f,-0.02f).Normalized() * F3 ); 
-				ApplyForceLL( ref box, dt, new Vector3(-1, 0,-1 ) * 0.15f, new Vector3(-0.02f, 1.0f, 0.01f).Normalized() * F4 ); 
+				ApplyForceLL( ref box, dt, new Vector3(-1, 0,-1 ) * 0.15f, new Vector3(-0.02f, 1.0f, 0.01f).Normalized() * F4 );
 
-				ApplyLocalTorque( ref box, dt,  Vector3.Up * F1 * 0.02f );
-				ApplyLocalTorque( ref box, dt, -Vector3.Up * F2 * 0.02f );
-				ApplyLocalTorque( ref box, dt,  Vector3.Up * F3 * 0.02f );
-				ApplyLocalTorque( ref box, dt, -Vector3.Up * F4 * 0.02f );
+#endif
+                ApplyForceLL(ref box, dt, new Vector3( 1, 0, -1) * box.Length / 2 /(float)Math.Sqrt(2.0f), new Vector3(0.0f, 1.0f, 0.0f).Normalized() * F1);
+                ApplyForceLL(ref box, dt, new Vector3(1, 0, 1 )  * box.Length / 2 /(float)Math.Sqrt(2.0f), new Vector3(0.0f, 1.0f, 0.0f).Normalized() * F2);
+                ApplyForceLL(ref box, dt, new Vector3(-1, 0, 1)  * box.Length / 2 /(float)Math.Sqrt(2.0f), new Vector3(0.0f, 1.0f, 0.0f).Normalized() * F3);
+                ApplyForceLL(ref box, dt, new Vector3(-1, 0, -1) * box.Length / 2 /(float)Math.Sqrt(2.0f), new Vector3(0.0f, 1.0f, 0.0f).Normalized() * F4);
+
+                Matrix state = box.WorldTransform;
+                Vector3 totForce  = (F1 + F2 + F3 + F4) * Vector3.TransformNormal(Vector3.Down, state);
+                testApplyCForce(totForce, dt);
+
+
+                //ApplyLocalTorque(ref box, dt, Vector3.Up * F1 * 0.02f);
+                //ApplyLocalTorque(ref box, dt, -Vector3.Up * F2 * 0.02f);
+                //ApplyLocalTorque(ref box, dt, Vector3.Up * F3 * 0.02f);
+                //ApplyLocalTorque(ref box, dt, -Vector3.Up * F4 * 0.02f);
 
 
 				worldTransform	=	
@@ -527,5 +630,18 @@ namespace Simulator {
 		    var m = box.WorldTransform;
 		    box.ApplyImpulse( Vector3.Transform(point, m), globalForce * dt );
 		}
+
+        public void testApplyCForce(Vector3 globalForce, float dt)
+        {
+            var m = box.WorldTransform;
+            box.ApplyImpulse(box.WorldTransform.Translation, globalForce * dt);
+        }
+
+        public void testApplyMomentum(ref Vector3 momentum, float dt)
+        {
+            var m = box.WorldTransform;
+            momentum = dt * momentum;
+            box.ApplyAngularImpulse(ref momentum);
+        }     
 	}
 }
