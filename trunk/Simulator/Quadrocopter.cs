@@ -132,40 +132,39 @@ namespace Simulator {
 
         private int powerToPdd(float pw)
         {
-            float koeff = 0.404370225f;
+            float koeff = 0.4f;//0.404370225f;
+            int d_num = 1;
             if ((pw * koeff)<0)
-                return 0;
+                return 50 * d_num;
             if ((pw * koeff)>1)
-                return 130;
+                return 130 * d_num;
 
-            return (int)(50 + 80 * pw * koeff); 
+            return (int)((50 + 80 * pw * koeff) * d_num);            
+        }
+
+        private float pddTpPower(int pdd)
+        {
+            float koeff = 0.4f;//0.404370225f;
+            int d_num = 1;
+            return (pdd/d_num - 50.0f)/80.0f/koeff;
         }
 
         public bool GeneralForceToPDD(int[] pddArray)
         {
             if (box == null)
                 return true;
-            float[] pw_array = new float[4];
+              
+            float[]   forces  = new float[4];
+            
             int avgPdd = powerToPdd(lift_force / 4); //(int)(50 + 80 * lift_force / 4 * koeff);            
 
-            float Im12_34 = Vector3.Dot(Vector3.TransformNormal(new Vector3(0, 0, 1), EigenIntertiaTensor),new Vector3 (0, 0, 1));
-            float Im14_23 = Vector3.Dot(Vector3.TransformNormal(new Vector3(1, 0, 0), EigenIntertiaTensor), new Vector3(1, 0, 0));
-
-            float m12_34 = Vector3.Dot(local_angular_momentum, new Vector3(0, 0, 1))/Im12_34;
-            float m14_23 = Vector3.Dot(local_angular_momentum, new Vector3(1, 0, 0))/Im14_23;
-
-            float arm = box.Length;
-
-            float diff_f_12_34 = m12_34 / arm;
-            float diff_f_14_23 = m14_23 / arm;         
-           
-            pw_array[0] = lift_force / 4 + diff_f_12_34 / 4 + diff_f_14_23 / 4;
-            pw_array[1] = lift_force / 4 + diff_f_12_34 / 4 - diff_f_14_23 / 4;
-            pw_array[2] = lift_force / 4 - diff_f_12_34 / 4 - diff_f_14_23 / 4;
-            pw_array[3] = lift_force / 4 - diff_f_12_34 / 4 + diff_f_14_23 / 4;
+            MomentumToForce(forces, ref local_angular_momentum);
 
             for (int i = 0; i < 4; i++)
-                pddArray[i] = powerToPdd(pw_array[i]);
+            {
+                  forces[i] += lift_force / 4;
+                pddArray[i]  = powerToPdd(forces[i]);
+            }
 
             return false;                  
         }
@@ -476,7 +475,7 @@ namespace Simulator {
 
 				if (box==null) {
 					box = new Box(Vector3.Zero, 0.4f, 0.07f, 0.4f, 0.580f );
-                    box.Position = new Vector3(0, 1.0f, 0);
+                    box.Position = new Vector3(-2.0f, 1.0f, 0);
 					box.PositionUpdateMode = PositionUpdateMode.Continuous;
 					world.Space.Add( box );
 					world.Drawer.Add( box );
@@ -494,12 +493,14 @@ namespace Simulator {
 				}
 
 				int r1,r2,r3,r4;
-				r1 = r2 = r3 = r4 = 0;
-
-				while (rotor1Delay.Count>cfg.DelayFrames) { r1 = rotor1Delay.Dequeue();	}
-				while (rotor2Delay.Count>cfg.DelayFrames) { r2 = rotor2Delay.Dequeue();	}
-				while (rotor3Delay.Count>cfg.DelayFrames) { r3 = rotor3Delay.Dequeue();	}
-				while (rotor4Delay.Count>cfg.DelayFrames) { r4 = rotor4Delay.Dequeue();	}
+				r1 = r2 = r3 = r4 = 50;
+                if (rotor1Delay.Count > 0)
+                {
+                    while (rotor1Delay.Count > cfg.DelayFrames) { r1 = rotor1Delay.Dequeue(); }
+                    while (rotor2Delay.Count > cfg.DelayFrames) { r2 = rotor2Delay.Dequeue(); }
+                    while (rotor3Delay.Count > cfg.DelayFrames) { r3 = rotor3Delay.Dequeue(); }
+                    while (rotor4Delay.Count > cfg.DelayFrames) { r4 = rotor4Delay.Dequeue(); }
+                }
 #if HG
 				float	f1	=	MathHelper.Clamp((r1 - 48) / 80.0f * ( 2.5f + 0.05f ), 0, float.MaxValue);
 				float	f2	=	MathHelper.Clamp((r2 - 51) / 81.0f * ( 2.5f - 0.02f ), 0, float.MaxValue);
@@ -507,10 +508,10 @@ namespace Simulator {
 				float	f4	=	MathHelper.Clamp((r4 - 49) / 82.0f * ( 2.5f - 0.03f ), 0, float.MaxValue);
 #endif
 #if SVT
-                float f1 = MathHelper.Clamp((r1 - 50) / 80.0f * (2.5f + 0.00f), 0, float.MaxValue);
-                float f2 = MathHelper.Clamp((r2 - 50) / 80.0f * (2.5f - 0.00f), 0, float.MaxValue);
-                float f3 = MathHelper.Clamp((r3 - 50) / 80.0f * (2.5f + 0.00f), 0, float.MaxValue);
-                float f4 = MathHelper.Clamp((r4 - 50) / 80.0f * (2.5f - 0.00f), 0, float.MaxValue);
+                float f1 = pddTpPower(r1); //MathHelper.Clamp((r1 - 50) / 80.0f / (0.4f + 0.00f), 0, float.MaxValue);
+                float f2 = pddTpPower(r2);// MathHelper.Clamp((r2 - 50) / 80.0f / (0.4f - 0.00f), 0, float.MaxValue);
+                float f3 = pddTpPower(r3);//MathHelper.Clamp((r3 - 50) / 80.0f / (0.4f + 0.00f), 0, float.MaxValue);
+                float f4 = pddTpPower(r4);//MathHelper.Clamp((r4 - 50) / 80.0f / (0.4f - 0.00f), 0, float.MaxValue);
 #endif
 				F1	=	MathHelper.Lerp( F1, f1, cfg.MotorLatency );
 				F2	=	MathHelper.Lerp( F2, f2, cfg.MotorLatency );
@@ -529,14 +530,15 @@ namespace Simulator {
 				ApplyForceLL( ref box, dt, new Vector3(-1, 0,-1 ) * 0.15f, new Vector3(-0.02f, 1.0f, 0.01f).Normalized() * F4 );
 
 #endif
-                ApplyForceLL(ref box, dt, new Vector3( 1, 0, -1) * box.Length / 2 /(float)Math.Sqrt(2.0f), new Vector3(0.0f, 1.0f, 0.0f).Normalized() * F1);
-                ApplyForceLL(ref box, dt, new Vector3(1, 0, 1 )  * box.Length / 2 /(float)Math.Sqrt(2.0f), new Vector3(0.0f, 1.0f, 0.0f).Normalized() * F2);
-                ApplyForceLL(ref box, dt, new Vector3(-1, 0, 1)  * box.Length / 2 /(float)Math.Sqrt(2.0f), new Vector3(0.0f, 1.0f, 0.0f).Normalized() * F3);
-                ApplyForceLL(ref box, dt, new Vector3(-1, 0, -1) * box.Length / 2 /(float)Math.Sqrt(2.0f), new Vector3(0.0f, 1.0f, 0.0f).Normalized() * F4);
+                float a = (float)Math.Sqrt(2) / 4 * box.Length;
+                ApplyForceLL(ref box, dt, new Vector3( a, 0, -a),Vector3.Up * F1);
+                ApplyForceLL(ref box, dt, new Vector3( a, 0,  a),Vector3.Up * F2);
+                ApplyForceLL(ref box, dt, new Vector3(-a, 0,  a),Vector3.Up * F3);
+                ApplyForceLL(ref box, dt, new Vector3(-a, 0, -a),Vector3.Up * F4);
 
-                Matrix state = box.WorldTransform;
-                Vector3 totForce  = (F1 + F2 + F3 + F4) * Vector3.TransformNormal(Vector3.Down, state);
-                testApplyCForce(totForce, dt);
+                //Matrix state = box.WorldTransform;
+                //Vector3 totForce  = (F1 + F2 + F3 + F4) * Vector3.TransformNormal(Vector3.Down, state);
+                //testApplyCForce(totForce, dt);
 
 
                 //ApplyLocalTorque(ref box, dt, Vector3.Up * F1 * 0.02f);
@@ -640,8 +642,55 @@ namespace Simulator {
         public void testApplyMomentum(ref Vector3 momentum, float dt)
         {
             var m = box.WorldTransform;
-            momentum = dt * momentum;
+            momentum = Vector3.TransformNormal(dt * momentum, Matrix.Invert(m)) ;
             box.ApplyAngularImpulse(ref momentum);
-        }     
+        }
+
+        public void testApplyMomentum1(ref Vector3 local_momentum, float dt)
+        {
+            float M_x = Vector3.Dot(new Vector3(1, 0, 0), local_momentum);
+            float M_y = Vector3.Dot(new Vector3(0, 1, 0), local_momentum);
+            float M_z = Vector3.Dot(new Vector3(0, 0, 1), local_momentum);
+
+            float[] forces = new float[4];
+            
+            float a = (float)Math.Sqrt(2) / 4 * box.Length;
+            MomentumToForce(forces, ref local_momentum);
+
+            ApplyForceLL(ref box, dt, new Vector3(a, 0, -a),  Vector3.Up * forces[0]);
+            ApplyForceLL(ref box, dt, new Vector3(a, 0,  a),  Vector3.Up * forces[1]);
+
+            ApplyForceLL(ref box, dt, new Vector3(-a, 0,  a), Vector3.Up * forces[2]);
+            ApplyForceLL(ref box, dt, new Vector3(-a, 0, -a), Vector3.Up * forces[3]);
+
+            /*ApplyForceLL(ref box, dt, new Vector3(a,  0, -a), Vector3.Up   * df_12_34 / 2);
+            ApplyForceLL(ref box, dt, new Vector3(a,  0,  a), Vector3.Up   * df_12_34 / 2);
+
+            ApplyForceLL(ref box, dt, new Vector3(-a, 0, -a), Vector3.Down * df_12_34 / 2);
+            ApplyForceLL(ref box, dt, new Vector3(-a, 0,  a), Vector3.Down * df_12_34 / 2);
+
+            ApplyForceLL(ref box, dt, new Vector3(a, 0,  -a), Vector3.Up * df_14_32 / 2);
+            ApplyForceLL(ref box, dt, new Vector3(-a, 0, -a), Vector3.Up * df_14_32 / 2);
+
+            ApplyForceLL(ref box, dt, new Vector3(a, 0, a) , Vector3.Down * df_14_32 / 2);
+            ApplyForceLL(ref box, dt, new Vector3(-a, 0, a), Vector3.Down * df_14_32 / 2);*/
+
+       }
+        public void MomentumToForce(float[] forces, ref Vector3 local_momentum)
+        {
+            float M_x = Vector3.Dot(new Vector3(1, 0, 0), local_momentum);
+            float M_y = Vector3.Dot(new Vector3(0, 1, 0), local_momentum);
+            float M_z = Vector3.Dot(new Vector3(0, 0, 1), local_momentum);
+
+            float df_14_32 = M_x / ((float)Math.Sqrt(2) / 2 * box.Length);            
+            float df_12_34 = M_z / ((float)Math.Sqrt(2) / 2 * box.Length);            
+
+            float a = (float)Math.Sqrt(2) / 4 * box.Length;
+
+            forces[0] = df_12_34 / 2 + df_14_32 / 2;
+            forces[1] = df_12_34 / 2 - df_14_32 / 2;
+            forces[2] = -df_14_32 / 2 - df_12_34 / 2;
+            forces[3] = -df_12_34 / 2 + df_14_32 / 2;
+        }  
 	}
 }

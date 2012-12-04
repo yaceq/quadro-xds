@@ -24,6 +24,7 @@ using BEPUphysics.MathExtensions;
 using System.Runtime.InteropServices;
 using Misc;
 
+
 namespace Simulator {
 	/// <summary>
 	/// This is a game component that implements IUpdateable.
@@ -48,6 +49,8 @@ namespace Simulator {
 		public Tracker	Tracker;
 
 		public AudioListener	Listener;
+
+        QController position_controller;
 
 		//float yaw	= -145;
 		//float pitch = 35;
@@ -101,6 +104,10 @@ namespace Simulator {
             quadrocopters = new List<Quadrocopter>() { new Quadrocopter(Game, this, Vector3.Zero, "q1") };
 
 			base.Initialize();
+
+            position_controller= new QController(3);
+            position_controller.setTarget(new Vector3(0.5f, 0.5f, 0.0f));
+            
 		}
 
 
@@ -227,18 +234,39 @@ namespace Simulator {
 
 
 			foreach (var quadrocop in quadrocopters) {
-				quadrocop.Update(dt);
+				
+
+#if SVT1
+                var   fw_momentum   = new Vector3( 0.1f, 0, -0.00f);
+                var back_momentum   = new Vector3(-0.1f, 0, -0.00f);
+                quadrocop.AddGeneralForce(5.687857f, fw_momentum);
+              
+                  quadrocop.testApplyMomentum(ref back_momentum, dt);
+//                  quadrocop.testApplyMomentum1 (ref fw_momentum  , dt);
+//
+//                quadrocop.testApplyCForce(new Vector3(0, 5.687857f, 0), dt);
+#endif
 
 #if SVT
-                quadrocop.AddGeneralForce(5.687857f, new Vector3(0.0005f, 0.0f, 0.0005f));
-                //Нормировочный коэффициет 26.52f по X- разобраться откуда!
-                //Нормировочный коэффициет 26.52f по Z- разобраться откуда!
-                var back_momentum = new Vector3(-0.0005f, 0, -0.0005f) * 26.52f;
-                back_momentum = Vector3.TransformNormal(back_momentum, Matrix.Invert(quadrocop.box.WorldTransform));
-                quadrocop.testApplyMomentum(ref back_momentum, dt);
-                quadrocop.testApplyCForce(new Vector3(0, 5.687857f, 0), dt);
+                Vector3 control_force;
+                Vector3 control_momentum;
+                Vector3 noise_force;
+                Vector3 noise_momentum;
+                if(quadrocop.box!=null)
+                {
+                position_controller.QControl(out control_force, out control_momentum, quadrocop.box.WorldTransform, quadrocop.EigenIntertiaTensor, dt);
+                quadrocop.AddGeneralForce(control_force.Length(), control_momentum);
+                position_controller.NoisGenerator(out noise_force, out noise_momentum, 0.2f, 0.0001f);
+                quadrocop.testApplyCForce(noise_force, dt);
+                quadrocop.testApplyMomentum(ref noise_momentum, dt);
+                }
+                quadrocop.Update(dt);
+                
+//                quadrocop.testApplyMomentum1(ref control_momentum, dt);
+//                quadrocop.testApplyCForce(control_force, dt);
+                
 #endif
-			}
+            }
 
 
 			space.Update( (float)gameTime.ElapsedGameTime.TotalSeconds );
@@ -327,10 +355,14 @@ namespace Simulator {
             omegaHistory = new ArrayList(3);
             forceHistory = new ArrayList(3);
             stabK = new float[4];
-            stabK[0] = -20.0f;
-            stabK[1] = -40.0f;
-            stabK[2] = -25.01f;
-            stabK[3] = -10.01f;
+            stabK[0] = -10.0f;
+            stabK[1] = -25.0f;
+            stabK[2] = -12.01f;
+            stabK[3] = -6.01f;
+
+            noise_force    = Vector3.Zero;
+            noise_momentum = Vector3.Zero;
+            rnd_gen = new Random();
         }
 
         public void setTarget(Vector3 targetPos)
@@ -355,7 +387,7 @@ namespace Simulator {
             return new Vector3(qt.X, qt.Y, qt.Z);
         }
 
-        public void QControl(out Vector3 out_force, out Vector3 out_momentum, Matrix state, Matrix3X3 inertiaTensor, float dt)
+        public void QControl(out Vector3 out_force, out Vector3 out_momentum, Matrix state, Matrix inertiaTensor, float dt)
         {
             //Вычсление относительного положения целевого состояния
             
@@ -424,7 +456,7 @@ namespace Simulator {
                         + stabK[3] / dt / dt * ((Vector3)velHistory[0] - 2 * (Vector3)velHistory[1] + (Vector3)velHistory[2])
                     )
                         * dt * dt
-                        + 2 * (Vector3)forceHistory[2] - (Vector3)forceHistory[1];
+                        + 2 * (Vector3)forceHistory[2] - (Vector3)forceHistory[1] ;
 
 
                     forceHistory.Add(force);
@@ -438,20 +470,36 @@ namespace Simulator {
                     Vector3 localOmegaPred = Vector3.TransformNormal(pred_omega, state);
                     Vector3 localOmegaCurr = Vector3.TransformNormal((Vector3)omegaHistory[omegaHistory.Count - 1], state);
 
-                    Matrix inertiaTensor4X4 = Matrix3X3.ToMatrix4X4(inertiaTensor);
-                    momentum = Vector3.TransformNormal((localOmegaPred - localOmegaCurr) / dt, inertiaTensor4X4);          
-                    out_momentum = momentum;
+                    Matrix inertiaTensor4X4 = inertiaTensor;
+                    momentum = Vector3.TransformNormal((localOmegaPred - localOmegaCurr) / dt, inertiaTensor4X4);
+                    if (momentum.Length() > 1.0f)
+                        out_momentum = momentum / (momentum.Length() * 1.0f);
+                    else
+                        out_momentum = momentum;
 
                     forceHistory.RemoveAt(0);
                 }
                 else
                 {
-                    forceHistory.Add(6.860f * Vector3.Up);
+                    forceHistory.Add(5.687857f * Vector3.Up);
                     out_momentum = Vector3.Zero;
                 }               
                 
-                out_force    = force;                
+                out_force = (Vector3)forceHistory[forceHistory.Count-1];                
             }
+        }
+
+        public void NoisGenerator(out Vector3 n_force,out Vector3 n_momentum, float step_force, float step_momentum)
+        {
+            float a = 1.0f / (float)Math.Sqrt(3);
+            this.noise_force += new Vector3(((float)rnd_gen.NextDouble() * a - 0.5f * a) * step_force,
+                                               (float)(rnd_gen.NextDouble() * a - 0.5f * a) * step_force,
+                                               (float)(rnd_gen.NextDouble() * a - 0.5f * a) * step_force);
+            this.noise_momentum += new Vector3(((float)rnd_gen.NextDouble()  * a - 0.5f * a)* step_momentum,
+                                               (float)(rnd_gen.NextDouble() * a - 0.5f * a)* step_momentum, 
+                                               (float)(rnd_gen.NextDouble() * a - 0.5f * a)* step_momentum);
+            n_force = this.noise_force;
+            n_momentum = this.noise_momentum;
         }
 
         private ArrayList posHistory;
@@ -462,7 +510,12 @@ namespace Simulator {
         private ArrayList forceHistory;
            
         private Matrix    targetState;
-        private Vector3   targetPos;        
+        private Vector3   targetPos;    
+    
+        private Vector3 noise_force;
+        private Vector3 noise_momentum;
+
+        private Random rnd_gen;
 
         private float[] stabK;
     }
